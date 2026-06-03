@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AppStateProvider, useSharedAppState } from './hooks/AppStateContext';
 import { ToastProvider } from './components/ui/Toast';
@@ -204,12 +204,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ToastProvider>
         <AppStateProvider>
           <AppRoutes />
         </AppStateProvider>
       </ToastProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
