@@ -27,7 +27,7 @@ export default function BottomTabBar() {
 
   return (
     <nav className="fixed bottom-3 inset-x-0 z-40 max-w-lg mx-auto px-4">
-      <div className="bg-white/80 backdrop-blur-xl border border-pink/6 rounded-[24px] shadow-[0_4px_24px_rgba(255,105,180,0.06),0_1px_4px_rgba(0,0,0,0.02)]">
+      <div className="bg-white/55 dark:bg-[#3D2B3E]/50 backdrop-blur-2xl border border-pink/8 dark:border-white/[0.04] rounded-[24px] shadow-[0_4px_28px_rgba(255,105,180,0.07),0_0_0_1px_rgba(255,105,180,0.03)] dark:shadow-[0_4px_28px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.02)]">
         <div className="flex items-center justify-around px-1 py-1.5 safe-bottom">
           {TABS.map((tab) => {
             const active = isActive(tab.path);
@@ -42,7 +42,7 @@ export default function BottomTabBar() {
                 {active && (
                   <motion.div
                     layoutId="tab-pill"
-                    className="absolute inset-0 bg-gradient-to-b from-pink/8 to-pink/4 rounded-2xl border border-pink/10"
+                    className="absolute inset-0 bg-pink/8 dark:bg-pink/[0.12] rounded-2xl border border-pink/12 dark:border-pink/[0.15]"
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -52,15 +52,17 @@ export default function BottomTabBar() {
                     size={19}
                     strokeWidth={active ? 2.3 : 1.8}
                     className={`transition-all duration-300 ${
-                      active ? 'text-pink' : 'text-text-muted/35 group-hover:text-text-muted/60'
+                      active
+                        ? 'text-pink dark:text-pink'
+                        : 'text-text-muted/30 dark:text-text-muted/25 group-hover:text-text-muted/50 dark:group-hover:text-text-muted/45'
                     }`}
                   />
                 </div>
                 <span
                   className={`relative z-10 text-[10px] transition-all duration-300 ${
                     active
-                      ? 'text-pink font-semibold'
-                      : 'text-text-muted/35 font-medium'
+                      ? 'text-pink dark:text-pink font-semibold'
+                      : 'text-text-muted/30 dark:text-text-muted/25 font-medium'
                   }`}
                 >
                   {tab.label}
