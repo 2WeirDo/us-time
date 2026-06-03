@@ -62,6 +62,22 @@ ALTER TABLE milestones DISABLE ROW LEVEL SECURITY;
 -- ====== 启用 Realtime (让帖子实时同步) ======
 ALTER PUBLICATION supabase_realtime ADD TABLE posts;
 
+-- ====== 存储桶策略 (允许上传照片和语音) ======
+-- 创建 public 存储桶
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('photos', 'photos', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 允许任何人读取存储桶中的文件
+DROP POLICY IF EXISTS "Public read access" ON storage.objects;
+CREATE POLICY "Public read access" ON storage.objects
+  FOR SELECT USING (bucket_id = 'photos');
+
+-- 允许任何人上传文件到存储桶
+DROP POLICY IF EXISTS "Public upload access" ON storage.objects;
+CREATE POLICY "Public upload access" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'photos');
+
 -- ====== 可选：插入一条初始数据测试 ======
 -- INSERT INTO couple_settings (id, my_name, partner_name, start_date, passcode)
 -- VALUES (1, '男友', '女友', '2023-06-15', '1234');

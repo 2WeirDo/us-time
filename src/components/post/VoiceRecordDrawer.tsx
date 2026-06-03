@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, User, Loader2, Mic, Square, Play, Trash2 } from 'lucide-react';
+import { X, Send, User, Loader2, Mic, Square, Play, Trash2, AlertCircle } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
+import { useToast } from '../ui/Toast';
 import { uploadAudio } from '../../lib/storage';
 
 interface VoiceRecordDrawerProps {
@@ -11,8 +12,10 @@ interface VoiceRecordDrawerProps {
 
 export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerProps) {
   const { state, addPost } = useSharedAppState();
+  const { toast } = useToast();
   const [author, setAuthor] = useState<'me' | 'partner'>('me');
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
 
   // Voice recording state
   const [recording, setRecording] = useState(false);
@@ -28,6 +31,7 @@ export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerPr
       setAudio(null);
       setRecording(false);
       setRecordingTime(0);
+      setError('');
       setAuthor('me');
     }
   }, [open]);
@@ -43,6 +47,7 @@ export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerPr
   }, []);
 
   const startRecording = useCallback(async () => {
+    setError('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -77,14 +82,32 @@ export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerPr
         }
       };
 
+      recorder.onerror = () => {
+        setError('录音失败，请重试');
+        setRecording(false);
+        stream.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      };
+
       recorder.start();
       setRecording(true);
       setRecordingTime(0);
       timerRef.current = setInterval(() => {
         setRecordingTime((t) => t + 1);
       }, 1000);
-    } catch {
-      // Permission denied or no mic
+    } catch (e) {
+      const err = e as DOMException;
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('麦克风权限被拒绝，请在浏览器设置中允许麦克风访问');
+      } else if (err.name === 'NotFoundError') {
+        setError('未检测到麦克风设备');
+      } else {
+        setError('无法启动录音，请检查设备权限');
+      }
     }
   }, []);
 
@@ -102,6 +125,7 @@ export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerPr
     setRecording(false);
     setAudio(null);
     setRecordingTime(0);
+    setError('');
   }, []);
 
   const formatTime = (seconds: number) => {
@@ -112,34 +136,39 @@ export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerPr
 
   const handleSubmit = async () => {
     if (!audio) return;
-
+    setError('');
     setUploading(true);
 
-    // Upload audio to Storage
-    let audioUrl: string | undefined;
-    if (audio.startsWith('http')) {
-      audioUrl = audio;
-    } else {
-      const uploaded = await uploadAudio(audio);
-      if (uploaded) audioUrl = uploaded;
-    }
+    try {
+      // Upload audio to Storage (try, but fallback to base64 if fails)
+      let audioUrl: string = audio;
+      if (!audio.startsWith('http')) {
+        const uploaded = await uploadAudio(audio);
+        if (uploaded) {
+          audioUrl = uploaded;
+        } else {
+          // Upload failed — keep base64 as fallback so the post still works
+          console.warn('Voice upload to storage failed, using base64 fallback');
+          toast('语音上传至存储失败，使用本地备份发布', 'info');
+        }
+      }
 
-    if (!audioUrl) {
+      await addPost({
+        author,
+        content: '',
+        photos: [],
+        audio: audioUrl,
+        mood: undefined,
+        reactions: {},
+      });
+
       setUploading(false);
-      return;
+      onClose();
+    } catch (e) {
+      console.error('VoiceRecordDrawer submit error:', e);
+      toast('发布失败，请重试', 'error');
+      setUploading(false);
     }
-
-    await addPost({
-      author,
-      content: '',
-      photos: [],
-      audio: audioUrl,
-      mood: undefined,
-      reactions: {},
-    });
-
-    setUploading(false);
-    onClose();
   };
 
   const canSubmit = !!audio && !uploading;
@@ -211,6 +240,16 @@ export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerPr
                 </button>
               </div>
             </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="px-5 pb-3">
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  <AlertCircle size={16} className="text-red flex-shrink-0" />
+                  <p className="text-sm text-red">{error}</p>
+                </div>
+              </div>
+            )}
 
             {/* Recording area */}
             <div className="px-5 pb-6">
