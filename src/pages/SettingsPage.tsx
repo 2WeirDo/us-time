@@ -20,6 +20,7 @@ import AvatarUpload from '../components/ui/AvatarUpload';
 import DatePicker from '../components/ui/DatePicker';
 import type { Milestone } from '../types';
 import { generatePairingCode, generatePairingQRCode } from '../lib/pairing';
+import { generateId } from '../lib/utils';
 
 export default function SettingsPage() {
   const {
@@ -74,7 +75,7 @@ export default function SettingsPage() {
   const handleAddMilestone = () => {
     if (!newMsTitle.trim() || !newMsDate) return;
     const milestone: Milestone = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       title: newMsTitle.trim(),
       date: newMsDate,
       type: 'custom',
