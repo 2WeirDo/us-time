@@ -54,7 +54,7 @@ export default function BottomTabBar() {
                     className={`transition-all duration-300 ${
                       active
                         ? 'text-pink dark:text-pink'
-                        : 'text-text-muted/30 dark:text-text-muted/25 group-hover:text-text-muted/50 dark:group-hover:text-text-muted/45'
+                        : 'text-text-muted/70 dark:text-text-muted/65 group-hover:text-text-muted/90 dark:group-hover:text-text-muted/65'
                     }`}
                   />
                 </div>
@@ -62,7 +62,7 @@ export default function BottomTabBar() {
                   className={`relative z-10 text-[10px] transition-all duration-300 ${
                     active
                       ? 'text-pink dark:text-pink font-semibold'
-                      : 'text-text-muted/30 dark:text-text-muted/25 font-medium'
+                      : 'text-text-muted/100 dark:text-text-muted/95 font-medium'
                   }`}
                 >
                   {tab.label}

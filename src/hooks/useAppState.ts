@@ -40,7 +40,7 @@ const DEFAULT_STATE: AppState = {
   bucketListItems: [],
   footprints: [],
   petState: null,
-  theme: 'light',
+  theme: 'dark',
   setupComplete: false,
   todayMoods: [],
 };
@@ -128,7 +128,7 @@ export function useAppState() {
         petState: pet,
         setupComplete: !!settings || prev.setupComplete,
         theme:
-          (localStorage.getItem(LOCAL_KEYS.theme) as AppState['theme']) || 'light',
+          (localStorage.getItem(LOCAL_KEYS.theme) as AppState['theme']) || 'dark',
       }));
     } catch (e) {
       console.error('loadData error:', e);
