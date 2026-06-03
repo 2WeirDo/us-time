@@ -87,6 +87,11 @@ export function useAppState() {
       // Try to ensure storage bucket exists (non-critical)
       ensurePhotosBucket().catch(() => {});
 
+      // Persist passcode from server so setCoupleInfo can use it later
+      if (settings?.passcode) {
+        localStorage.setItem(LOCAL_KEYS.passcode, settings.passcode);
+      }
+
       setState((prev) => ({
         ...prev,
         // Keep previous coupleInfo if Supabase fetch returns nothing
@@ -275,7 +280,18 @@ export function useAppState() {
 
   const setCoupleInfo = useCallback(
     async (info: CoupleInfo, passcode?: string) => {
-      const code = passcode || localStorage.getItem(LOCAL_KEYS.passcode) || '0000';
+      // Figure out the passcode: explicit arg → localStorage → fetch from server
+      let code = passcode || localStorage.getItem(LOCAL_KEYS.passcode) || null;
+      if (!code) {
+        // Last resort: fetch current passcode from Supabase to avoid overwriting it
+        const settings = await fetchCoupleSettings();
+        code = settings?.passcode || null;
+      }
+      // If still no passcode, use default only for first-time setup (shouldn't happen)
+      if (!code) {
+        code = '0000';
+      }
+
       localStorage.setItem(LOCAL_KEYS.passcode, code);
 
       const success = await saveCoupleSettings(info, code);
