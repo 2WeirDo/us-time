@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, MapPin, Crosshair } from 'lucide-react';
+import { X, Send, Crosshair } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 
 interface FootprintAddDrawerProps {
@@ -49,7 +49,7 @@ export default function FootprintAddDrawer({
         setLng(pos.coords.longitude.toFixed(6));
         setLocating(false);
       },
-      (err) => {
+      () => {
         setLocError('定位失败，请手动输入坐标');
         setLocating(false);
       },

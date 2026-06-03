@@ -12,8 +12,6 @@ export default function BucketListView() {
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<BucketCategory | 'all'>('all');
 
-  const { items } = state;
-
   const filtered = useMemo(() => {
     const source = state.bucketListItems;
     if (filterCategory === 'all') return source;

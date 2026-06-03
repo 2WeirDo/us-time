@@ -16,7 +16,7 @@ BUCKET_CATEGORIES.forEach((c) => {
 });
 
 export default function BucketListAddDrawer({ open, onClose }: BucketListAddDrawerProps) {
-  const { state, identity, addBucketItem } = useSharedAppState();
+  const { identity, addBucketItem } = useSharedAppState();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<BucketCategory>('other');
   const [notes, setNotes] = useState('');

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { AppState, Post, Milestone, CoupleInfo, TodayMood, LoveLetter, BucketListItem, Footprint, PetState } from '../types';
 import { useToast } from '../components/ui/Toast';
 import {
@@ -92,7 +92,6 @@ export function useAppState() {
     () => localStorage.getItem(LOCAL_KEYS.identity) as 'me' | 'partner' | null
   );
   const [unlocked, setUnlocked] = useState(false);
-  const unsubscribeRef = useRef<(() => void) | null>(null);
   const { toast } = useToast();
 
   // Load all data from Supabase

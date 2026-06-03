@@ -11,7 +11,7 @@ interface LetterComposerDrawerProps {
 }
 
 export default function LetterComposerDrawer({ open, onClose }: LetterComposerDrawerProps) {
-  const { state, identity, addLetter } = useSharedAppState();
+  const { identity, addLetter } = useSharedAppState();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
