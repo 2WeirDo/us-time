@@ -177,16 +177,16 @@ export function useAppState() {
       // Optimistic update
       setState((prev) => ({
         ...prev,
-        posts: prev.posts.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                ...updates,
-                mood: updates.mood ?? p.mood,
-                audio: updates.audio !== undefined ? (updates.audio ?? undefined) : p.audio,
-              }
-            : p
-        ),
+        posts: prev.posts.map((p) => {
+          if (p.id !== postId) return p;
+          const { audio: updAudio, mood: updMood, ...rest } = updates;
+          return {
+            ...p,
+            ...rest,
+            mood: updMood ?? p.mood,
+            audio: updAudio !== undefined ? (updAudio ?? undefined) : p.audio,
+          };
+        }),
       }));
       const result = await updatePostInDB(postId, updates);
       if (!result) {
