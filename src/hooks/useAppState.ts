@@ -178,7 +178,14 @@ export function useAppState() {
       setState((prev) => ({
         ...prev,
         posts: prev.posts.map((p) =>
-          p.id === postId ? { ...p, ...updates, mood: updates.mood ?? p.mood } : p
+          p.id === postId
+            ? {
+                ...p,
+                ...updates,
+                mood: updates.mood ?? p.mood,
+                audio: updates.audio !== undefined ? (updates.audio ?? undefined) : p.audio,
+              }
+            : p
         ),
       }));
       const result = await updatePostInDB(postId, updates);
