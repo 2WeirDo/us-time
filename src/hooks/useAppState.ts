@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { AppState, Post, Milestone, CoupleInfo } from '../types';
+import type { AppState, Post, Milestone, CoupleInfo, TodayMood } from '../types';
 import { useToast } from '../components/ui/Toast';
 import {
   fetchPosts,
@@ -30,10 +30,42 @@ const LOCAL_KEYS = {
   identity: 'us-time-identity', // 'me' | 'partner' | null
   passcode: 'us-time-passcode',
   theme: 'us-time-theme',
+  moods: 'us-time-moods',
 };
 
+/** Day key that shifts at 6am instead of midnight */
+function getDayKey(): string {
+  const now = new Date();
+  if (now.getHours() < 6) {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  }
+  return now.toISOString().split('T')[0];
+}
+
+/** Load persisted moods, discarding any from past days */
+function loadPersistedMoods(): TodayMood[] {
+  try {
+    const stored = localStorage.getItem(LOCAL_KEYS.moods);
+    if (!stored) return [];
+    const moods: TodayMood[] = JSON.parse(stored);
+    const today = getDayKey();
+    const valid = moods.filter((m) => m.date === today);
+    if (valid.length !== moods.length) {
+      localStorage.setItem(LOCAL_KEYS.moods, JSON.stringify(valid));
+    }
+    return valid;
+  } catch {
+    return [];
+  }
+}
+
 export function useAppState() {
-  const [state, setState] = useState<AppState>(DEFAULT_STATE);
+  const [state, setState] = useState<AppState>(() => ({
+    ...DEFAULT_STATE,
+    todayMoods: loadPersistedMoods(),
+  }));
   const [loading, setLoading] = useState(true);
   const [identity, setIdentityState] = useState<'me' | 'partner' | null>(
     () => localStorage.getItem(LOCAL_KEYS.identity) as 'me' | 'partner' | null
@@ -141,7 +173,7 @@ export function useAppState() {
   );
 
   const editPost = useCallback(
-    async (postId: string, updates: { content?: string; photos?: string[]; mood?: string | null }) => {
+    async (postId: string, updates: { content?: string; photos?: string[]; audio?: string | null; mood?: string | null }) => {
       // Optimistic update
       setState((prev) => ({
         ...prev,
@@ -278,7 +310,9 @@ export function useAppState() {
         const filtered = prev.todayMoods.filter(
           (m) => !(m.date === mood.date && m.author === mood.author)
         );
-        return { ...prev, todayMoods: [...filtered, mood] };
+        const newMoods = [...filtered, mood];
+        localStorage.setItem(LOCAL_KEYS.moods, JSON.stringify(newMoods));
+        return { ...prev, todayMoods: newMoods };
       });
     },
     []

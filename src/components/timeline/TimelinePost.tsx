@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, Play, Pause } from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
 import type { Post } from '../../types';
 import { useSharedAppState } from '../../hooks/AppStateContext';
@@ -124,6 +124,13 @@ export default function TimelinePost({ post, index, onEdit }: TimelinePostProps)
           </p>
         )}
 
+        {/* Audio */}
+        {post.audio && (
+          <div className="mt-2">
+            <AudioPlayer src={post.audio} />
+          </div>
+        )}
+
         {/* Photos */}
         {post.photos.length > 0 && !imgError && (
           <div
@@ -203,5 +210,60 @@ export default function TimelinePost({ post, index, onEdit }: TimelinePostProps)
         />
       )}
     </motion.div>
+  );
+}
+
+/** Simple audio player for voice messages */
+function AudioPlayer({ src }: { src: string }) {
+  const [playing, setPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (playing) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setPlaying(!playing);
+  };
+
+  const handleEnded = () => setPlaying(false);
+
+  const handleLoaded = () => {
+    if (audioRef.current) {
+      const d = Math.round(audioRef.current.duration || 0);
+      setDuration(d);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3 bg-warm-cream rounded-2xl px-3 py-2.5">
+      <button
+        onClick={togglePlay}
+        className="flex-shrink-0 w-8 h-8 rounded-full bg-pink text-white flex items-center justify-center hover:bg-pink-dark transition-colors"
+      >
+        {playing ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+      </button>
+      <div className="flex-1 h-1.5 bg-text-muted/10 rounded-full overflow-hidden">
+        <motion.div
+          className="h-full bg-pink rounded-full"
+          animate={{ width: playing ? '100%' : '0%' }}
+          transition={{ duration: playing ? (duration || 5) : 0, ease: 'linear' }}
+          key={playing ? 'playing' : 'stopped'}
+        />
+      </div>
+      <span className="text-xs text-text-muted flex-shrink-0">
+        {duration > 0 ? `${duration}"` : ''}
+      </span>
+      <audio
+        ref={audioRef}
+        src={src}
+        onEnded={handleEnded}
+        onLoadedMetadata={handleLoaded}
+        preload="metadata"
+      />
+    </div>
   );
 }

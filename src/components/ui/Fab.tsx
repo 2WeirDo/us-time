@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Image, FileText } from 'lucide-react';
+import { Plus, Mic, FileText } from 'lucide-react';
 
 interface FabProps {
   onNewPost?: () => void;
@@ -44,8 +44,8 @@ export default function Fab({ onNewPost }: FabProps) {
               transition={{ delay: 0.1 }}
               onClick={handleNewPost}
             >
-              <Image size={18} className="text-pink-dark" />
-              分享照片
+              <Mic size={18} className="text-pink-dark" />
+              录制语音
             </motion.button>
           </motion.div>
         )}

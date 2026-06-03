@@ -132,3 +132,43 @@ export async function deletePostPhotos(photoUrls: string[]): Promise<void> {
     }
   }
 }
+
+/**
+ * Upload a base64 audio to Supabase Storage.
+ * Returns the public URL, or null on failure.
+ */
+export async function uploadAudio(
+  base64Data: string,
+  filename?: string
+): Promise<string | null> {
+  const sb = getSupabase();
+  if (!sb) return null;
+
+  const name = filename || `voice-${Date.now()}.webm`;
+
+  const base64 = base64Data.split(',')[1] || base64Data;
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: 'audio/webm' });
+
+  const { error } = await sb.storage
+    .from(BUCKET_NAME)
+    .upload(name, blob, {
+      contentType: 'audio/webm',
+      upsert: true,
+    });
+
+  if (error) {
+    console.error('uploadAudio error:', error);
+    return null;
+  }
+
+  const { data: urlData } = sb.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(name);
+
+  return urlData.publicUrl;
+}

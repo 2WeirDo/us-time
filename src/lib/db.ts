@@ -32,6 +32,7 @@ export async function createPost(
       author: post.author,
       content: post.content,
       photos: post.photos,
+      audio: post.audio || null,
       mood: post.mood || null,
     })
     .select()
@@ -47,7 +48,7 @@ export async function createPost(
 
 export async function updatePostInDB(
   postId: string,
-  updates: { content?: string; photos?: string[]; mood?: string | null }
+  updates: { content?: string; photos?: string[]; audio?: string | null; mood?: string | null }
 ): Promise<Post | null> {
   const sb = getSupabase();
   if (!sb) return null;
@@ -256,6 +257,7 @@ function mapPost(db: any): Post {
     author: db.author,
     content: db.content || '',
     photos: db.photos || [],
+    audio: db.audio || undefined,
     mood: db.mood || undefined,
     createdAt: db.created_at,
     reactions: db.reactions || {},

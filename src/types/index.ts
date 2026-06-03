@@ -14,6 +14,7 @@ export interface Post {
   author: 'me' | 'partner';
   content: string;
   photos: string[]; // base64 data URLs
+  audio?: string; // base64 data URL for voice recording
   mood?: string; // emoji e.g. "😊"
   createdAt: string; // ISO datetime
   reactions: Record<string, string[]>; // { "❤️": ["me", "partner"] }
