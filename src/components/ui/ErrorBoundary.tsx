@@ -1,6 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
