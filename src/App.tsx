@@ -12,6 +12,10 @@ import PasscodeScreen from './components/onboarding/PasscodeScreen';
 import SetupWizard from './components/onboarding/SetupWizard';
 
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const PhotoWallPage = lazy(() => import('./pages/PhotoWallPage'));
+const ExplorePage = lazy(() => import('./pages/ExplorePage'));
+const LettersPage = lazy(() => import('./pages/LettersPage'));
+const OnThisDayPage = lazy(() => import('./pages/OnThisDayPage'));
 
 /**
  * Simple state machine. Only ONE phase is active at a time.
@@ -193,6 +197,70 @@ function AppRoutes() {
                 }
               >
                 <SettingsPage />
+              </Suspense>
+            </AppLayout>
+          }
+        />
+        <Route
+          path="/photos"
+          element={
+            <AppLayout title="照片墙">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="text-3xl animate-bounce">🖼️</span>
+                  </div>
+                }
+              >
+                <PhotoWallPage />
+              </Suspense>
+            </AppLayout>
+          }
+        />
+        <Route
+          path="/explore"
+          element={
+            <AppLayout title="发现">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="text-3xl animate-bounce">🗺️</span>
+                  </div>
+                }
+              >
+                <ExplorePage />
+              </Suspense>
+            </AppLayout>
+          }
+        />
+        <Route
+          path="/letters"
+          element={
+            <AppLayout title="书信">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="text-3xl animate-bounce">✉️</span>
+                  </div>
+                }
+              >
+                <LettersPage />
+              </Suspense>
+            </AppLayout>
+          }
+        />
+        <Route
+          path="/onthisday"
+          element={
+            <AppLayout title="那年今日">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="text-3xl animate-bounce">📅</span>
+                  </div>
+                }
+              >
+                <OnThisDayPage />
               </Suspense>
             </AppLayout>
           }

@@ -300,4 +300,8 @@
       rgba(255, 105, 180, 0.03) 8px
     );
   }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { AppState, Post, Milestone, CoupleInfo, TodayMood } from '../types';
+import type { AppState, Post, Milestone, CoupleInfo, TodayMood, LoveLetter, BucketListItem, Footprint, PetState } from '../types';
 import { useToast } from '../components/ui/Toast';
 import {
   fetchPosts,
@@ -13,6 +13,22 @@ import {
   deleteMilestoneFromDB,
   updatePostReactions,
   subscribeToPosts,
+  fetchLoveLetters,
+  createLoveLetter as createLoveLetterDB,
+  markLetterAsRead,
+  deleteLoveLetter as deleteLoveLetterDB,
+  subscribeToLetters,
+  fetchBucketItems,
+  createBucketItem as createBucketItemDB,
+  updateBucketItem as updateBucketItemDB,
+  deleteBucketItem as deleteBucketItemDB,
+  subscribeToBucketItems,
+  fetchFootprints,
+  createFootprint as createFootprintDB,
+  deleteFootprint as deleteFootprintDB,
+  subscribeToFootprints,
+  fetchPetState,
+  savePetState as savePetStateDB,
 } from '../lib/db';
 import { ensurePhotosBucket } from '../lib/storage';
 
@@ -20,6 +36,10 @@ const DEFAULT_STATE: AppState = {
   coupleInfo: null,
   posts: [],
   milestones: [],
+  loveLetters: [],
+  bucketListItems: [],
+  footprints: [],
+  petState: null,
   theme: 'light',
   setupComplete: false,
   todayMoods: [],
@@ -79,10 +99,14 @@ export function useAppState() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [settings, posts, milestones] = await Promise.all([
+      const [settings, posts, milestones, letters, bucketItems, footprints, pet] = await Promise.all([
         fetchCoupleSettings(),
         fetchPosts(),
         fetchMilestones(),
+        fetchLoveLetters(),
+        fetchBucketItems(),
+        fetchFootprints(),
+        fetchPetState(),
       ]);
       // Try to ensure storage bucket exists (non-critical)
       ensurePhotosBucket().catch(() => {});
@@ -99,6 +123,10 @@ export function useAppState() {
         coupleInfo: settings?.coupleInfo || prev.coupleInfo,
         posts,
         milestones,
+        loveLetters: letters,
+        bucketListItems: bucketItems,
+        footprints,
+        petState: pet,
         setupComplete: !!settings || prev.setupComplete,
         theme:
           (localStorage.getItem(LOCAL_KEYS.theme) as AppState['theme']) || 'light',
@@ -117,33 +145,41 @@ export function useAppState() {
     }
   }, [unlocked, loadData]);
 
-  // Real-time subscription
+  // Real-time subscriptions
   useEffect(() => {
     if (!unlocked) return;
 
-    unsubscribeRef.current = subscribeToPosts(
-      (newPost) => {
-        setState((prev) => ({
-          ...prev,
-          posts: [newPost, ...prev.posts],
-        }));
-      },
-      (updatedPost) => {
-        setState((prev) => ({
-          ...prev,
-          posts: prev.posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)),
-        }));
-      },
-      (postId) => {
-        setState((prev) => ({
-          ...prev,
-          posts: prev.posts.filter((p) => p.id !== postId),
-        }));
-      }
-    );
+    const cleanups: (() => void)[] = [];
+
+    // Posts subscription
+    cleanups.push(subscribeToPosts(
+      (newPost) => setState((prev) => ({ ...prev, posts: [newPost, ...prev.posts] })),
+      (updatedPost) => setState((prev) => ({ ...prev, posts: prev.posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)) })),
+      (postId) => setState((prev) => ({ ...prev, posts: prev.posts.filter((p) => p.id !== postId) })),
+    ));
+
+    // Letters subscription
+    cleanups.push(subscribeToLetters(
+      (newLetter) => setState((prev) => ({ ...prev, loveLetters: [newLetter, ...prev.loveLetters] })),
+      (updatedLetter) => setState((prev) => ({ ...prev, loveLetters: prev.loveLetters.map((l) => (l.id === updatedLetter.id ? updatedLetter : l)) })),
+      (letterId) => setState((prev) => ({ ...prev, loveLetters: prev.loveLetters.filter((l) => l.id !== letterId) })),
+    ));
+
+    // Bucket list subscription
+    cleanups.push(subscribeToBucketItems(
+      (newItem) => setState((prev) => ({ ...prev, bucketListItems: [newItem, ...prev.bucketListItems] })),
+      (updatedItem) => setState((prev) => ({ ...prev, bucketListItems: prev.bucketListItems.map((b) => (b.id === updatedItem.id ? updatedItem : b)) })),
+      (itemId) => setState((prev) => ({ ...prev, bucketListItems: prev.bucketListItems.filter((b) => b.id !== itemId) })),
+    ));
+
+    // Footprints subscription
+    cleanups.push(subscribeToFootprints(
+      (newFp) => setState((prev) => ({ ...prev, footprints: [newFp, ...prev.footprints] })),
+      (fpId) => setState((prev) => ({ ...prev, footprints: prev.footprints.filter((f) => f.id !== fpId) })),
+    ));
 
     return () => {
-      unsubscribeRef.current?.();
+      cleanups.forEach((fn) => fn());
     };
   }, [unlocked]);
 
@@ -365,6 +401,144 @@ export function useAppState() {
     setState((prev) => ({ ...prev, theme }));
   }, []);
 
+  // ====== Love Letters ======
+
+  const addLetter = useCallback(
+    async (letter: Omit<LoveLetter, 'id' | 'createdAt' | 'read'>) => {
+      const result = await createLoveLetterDB({ ...letter, read: false });
+      if (result) {
+        setState((prev) => ({ ...prev, loveLetters: [result, ...prev.loveLetters] }));
+        toast('书信已发送 💌', 'success');
+      } else {
+        toast('发送失败，请重试', 'error');
+      }
+    },
+    [toast]
+  );
+
+  const markLetterRead = useCallback(
+    async (letterId: string) => {
+      setState((prev) => ({
+        ...prev,
+        loveLetters: prev.loveLetters.map((l) => (l.id === letterId ? { ...l, read: true } : l)),
+      }));
+      await markLetterAsRead(letterId);
+    },
+    []
+  );
+
+  const deleteLetter = useCallback(
+    async (letterId: string) => {
+      setState((prev) => ({ ...prev, loveLetters: prev.loveLetters.filter((l) => l.id !== letterId) }));
+      await deleteLoveLetterDB(letterId);
+    },
+    []
+  );
+
+  // ====== Bucket List ======
+
+  const addBucketItem = useCallback(
+    async (item: Omit<BucketListItem, 'id' | 'createdAt' | 'completed' | 'completedBy' | 'completedAt'>) => {
+      const result = await createBucketItemDB({ ...item, completed: false });
+      if (result) {
+        setState((prev) => ({ ...prev, bucketListItems: [result, ...prev.bucketListItems] }));
+        toast('心愿已添加 ✨', 'success');
+      } else {
+        toast('添加失败，请重试', 'error');
+      }
+    },
+    [toast]
+  );
+
+  const toggleBucketCompletion = useCallback(
+    async (itemId: string) => {
+      const item = state.bucketListItems.find((b) => b.id === itemId);
+      if (!item) return;
+      const ident = identity;
+      if (!ident) return;
+
+      const now = new Date().toISOString();
+      const updates = item.completed
+        ? { completed: false, completedBy: null, completedAt: null }
+        : { completed: true, completedBy: ident, completedAt: now };
+
+      setState((prev) => ({
+        ...prev,
+        bucketListItems: prev.bucketListItems.map((b) =>
+          b.id === itemId ? { ...b, ...updates, completedBy: updates.completedBy as 'me' | 'partner' | undefined, completedAt: updates.completedAt as string | undefined } : b
+        ),
+      }));
+      await updateBucketItemDB(itemId, updates);
+    },
+    [state.bucketListItems, identity]
+  );
+
+  const deleteBucketItem = useCallback(
+    async (itemId: string) => {
+      setState((prev) => ({ ...prev, bucketListItems: prev.bucketListItems.filter((b) => b.id !== itemId) }));
+      await deleteBucketItemDB(itemId);
+    },
+    []
+  );
+
+  // ====== Footprints ======
+
+  const addFootprint = useCallback(
+    async (fp: Omit<Footprint, 'id' | 'createdAt'>) => {
+      const result = await createFootprintDB(fp);
+      if (result) {
+        setState((prev) => ({ ...prev, footprints: [result, ...prev.footprints] }));
+        toast('足迹已记录 📍', 'success');
+      } else {
+        toast('添加失败，请重试', 'error');
+      }
+    },
+    [toast]
+  );
+
+  const deleteFootprint = useCallback(
+    async (fpId: string) => {
+      setState((prev) => ({ ...prev, footprints: prev.footprints.filter((f) => f.id !== fpId) }));
+      await deleteFootprintDB(fpId);
+    },
+    []
+  );
+
+  // ====== Pet ======
+
+  const updatePetState = useCallback(
+    async (pet: PetState) => {
+      setState((prev) => ({ ...prev, petState: pet }));
+      await savePetStateDB(pet);
+    },
+    []
+  );
+
+  const feedPet = useCallback(async () => {
+    const pet = state.petState;
+    if (!pet) return;
+    const now = new Date().toISOString();
+    const newPet: PetState = {
+      ...pet,
+      happiness: Math.min(100, pet.happiness + 15),
+      lastFedAt: now,
+      lastInteractionAt: now,
+    };
+    await updatePetState(newPet);
+  }, [state.petState, updatePetState]);
+
+  const interactWithPet = useCallback(async () => {
+    const pet = state.petState;
+    if (!pet) return;
+    const now = new Date().toISOString();
+    const newPet: PetState = {
+      ...pet,
+      happiness: Math.min(100, pet.happiness + 5),
+      lastInteractionAt: now,
+    };
+    await updatePetState(newPet);
+  }, [state.petState, updatePetState]);
+
   // ====== Data management ======
 
   const exportData = useCallback(() => {
@@ -422,6 +596,22 @@ export function useAppState() {
     deleteMilestone,
     setTodayMood,
     setTheme,
+    // Love Letters
+    addLetter,
+    markLetterRead,
+    deleteLetter,
+    // Bucket List
+    addBucketItem,
+    toggleBucketCompletion,
+    deleteBucketItem,
+    // Footprints
+    addFootprint,
+    deleteFootprint,
+    // Pet
+    updatePetState,
+    feedPet,
+    interactWithPet,
+    // Data
     resetAll,
     exportData,
     importData,
