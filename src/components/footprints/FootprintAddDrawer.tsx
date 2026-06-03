@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Crosshair } from 'lucide-react';
+import { X, Send, Crosshair, Camera } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
+import { uploadPhoto } from '../../lib/storage';
 
 interface FootprintAddDrawerProps {
   open: boolean;
@@ -22,9 +23,11 @@ export default function FootprintAddDrawer({
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [date, setDate] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null); // base64 preview
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpen = () => {
     setName('');
@@ -32,8 +35,17 @@ export default function FootprintAddDrawer({
     setLat(defaultLat?.toString() || '');
     setLng(defaultLng?.toString() || '');
     setDate('');
+    setPhoto(null);
     setSaving(false);
     setLocError('');
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleLocate = () => {
@@ -60,11 +72,24 @@ export default function FootprintAddDrawer({
   const handleSubmit = async () => {
     if (!name.trim() || !lat || !lng || !identity) return;
     setSaving(true);
+
+    // Upload photo if selected
+    let photoUrl: string | undefined;
+    if (photo) {
+      if (photo.startsWith('http')) {
+        photoUrl = photo;
+      } else {
+        const uploaded = await uploadPhoto(photo, `footprint-${Date.now()}.jpg`);
+        photoUrl = uploaded || photo; // fallback to base64
+      }
+    }
+
     await addFootprint({
       name: name.trim(),
       lat: parseFloat(lat),
       lng: parseFloat(lng),
       date: date || undefined,
+      photo: photoUrl,
       note: note.trim(),
       createdBy: identity,
     });
@@ -80,7 +105,7 @@ export default function FootprintAddDrawer({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/40 z-50"
+            className="fixed inset-0 bg-black/40 z-[1001]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -89,7 +114,7 @@ export default function FootprintAddDrawer({
 
           {/* Drawer */}
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-[28px] shadow-lift max-w-lg mx-auto overflow-hidden"
+            className="fixed inset-x-0 bottom-0 z-[1001] bg-white rounded-t-[28px] shadow-lift max-w-lg mx-auto overflow-hidden"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -200,6 +225,43 @@ export default function FootprintAddDrawer({
                   rows={2}
                   maxLength={200}
                 />
+              </div>
+
+              {/* Photo upload */}
+              <div>
+                <label className="text-xs font-medium text-text-muted mb-2 block">
+                  照片（可选）
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoSelect}
+                  className="hidden"
+                />
+                {photo ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={photo}
+                      alt="足迹照片"
+                      className="w-24 h-24 object-cover rounded-xl border border-pink/10"
+                    />
+                    <button
+                      onClick={() => setPhoto(null)}
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white shadow border border-pink/10 flex items-center justify-center hover:bg-red-50 transition-colors"
+                    >
+                      <X size={12} className="text-red-400" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-24 h-24 rounded-xl border-2 border-dashed border-pink/15 text-pink/40 hover:text-pink hover:border-pink/30 transition-all flex flex-col items-center justify-center gap-1"
+                  >
+                    <Camera size={20} />
+                    <span className="text-[10px]">添加照片</span>
+                  </button>
+                )}
               </div>
             </div>
 

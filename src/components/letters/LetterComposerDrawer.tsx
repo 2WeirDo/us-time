@@ -59,7 +59,7 @@ export default function LetterComposerDrawer({ open, onClose }: LetterComposerDr
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/40 z-50"
+            className="fixed inset-0 bg-black/40 z-[1001]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -68,7 +68,7 @@ export default function LetterComposerDrawer({ open, onClose }: LetterComposerDr
 
           {/* Drawer */}
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-[28px] shadow-lift max-w-lg mx-auto overflow-hidden"
+            className="fixed inset-x-0 bottom-0 z-[1001] bg-white rounded-t-[28px] shadow-lift max-w-lg mx-auto overflow-hidden"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

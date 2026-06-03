@@ -152,28 +152,40 @@ export function useAppState() {
 
     // Posts subscription
     cleanups.push(subscribeToPosts(
-      (newPost) => setState((prev) => ({ ...prev, posts: [newPost, ...prev.posts] })),
+      (newPost) => setState((prev) => {
+	        if (prev.posts.some((p) => p.id === newPost.id)) return prev;
+	        return { ...prev, posts: [newPost, ...prev.posts] };
+	      }),
       (updatedPost) => setState((prev) => ({ ...prev, posts: prev.posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)) })),
       (postId) => setState((prev) => ({ ...prev, posts: prev.posts.filter((p) => p.id !== postId) })),
     ));
 
     // Letters subscription
     cleanups.push(subscribeToLetters(
-      (newLetter) => setState((prev) => ({ ...prev, loveLetters: [newLetter, ...prev.loveLetters] })),
+      (newLetter) => setState((prev) => {
+	        if (prev.loveLetters.some((l) => l.id === newLetter.id)) return prev;
+	        return { ...prev, loveLetters: [newLetter, ...prev.loveLetters] };
+	      }),
       (updatedLetter) => setState((prev) => ({ ...prev, loveLetters: prev.loveLetters.map((l) => (l.id === updatedLetter.id ? updatedLetter : l)) })),
       (letterId) => setState((prev) => ({ ...prev, loveLetters: prev.loveLetters.filter((l) => l.id !== letterId) })),
     ));
 
     // Bucket list subscription
     cleanups.push(subscribeToBucketItems(
-      (newItem) => setState((prev) => ({ ...prev, bucketListItems: [newItem, ...prev.bucketListItems] })),
+      (newItem) => setState((prev) => {
+	        if (prev.bucketListItems.some((b) => b.id === newItem.id)) return prev;
+	        return { ...prev, bucketListItems: [newItem, ...prev.bucketListItems] };
+	      }),
       (updatedItem) => setState((prev) => ({ ...prev, bucketListItems: prev.bucketListItems.map((b) => (b.id === updatedItem.id ? updatedItem : b)) })),
       (itemId) => setState((prev) => ({ ...prev, bucketListItems: prev.bucketListItems.filter((b) => b.id !== itemId) })),
     ));
 
     // Footprints subscription
     cleanups.push(subscribeToFootprints(
-      (newFp) => setState((prev) => ({ ...prev, footprints: [newFp, ...prev.footprints] })),
+      (newFp) => setState((prev) => {
+	        if (prev.footprints.some((f) => f.id === newFp.id)) return prev;
+	        return { ...prev, footprints: [newFp, ...prev.footprints] };
+	      }),
       (fpId) => setState((prev) => ({ ...prev, footprints: prev.footprints.filter((f) => f.id !== fpId) })),
     ));
 

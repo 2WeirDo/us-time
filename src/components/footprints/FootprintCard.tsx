@@ -54,6 +54,13 @@ export default function FootprintCard({
             </span>
           )}
         </div>
+        {footprint.photo && (
+          <img
+            src={footprint.photo}
+            alt={footprint.name}
+            className="mt-2 w-full h-20 object-cover rounded-lg"
+          />
+        )}
       </div>
 
       {/* Actions */}

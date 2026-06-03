@@ -84,14 +84,19 @@ export default function FootprintMap({
 
     // Add markers for each footprint
     footprints.forEach((fp) => {
+      const photoHtml = fp.photo
+        ? `<br/><img src="${fp.photo}" alt="${fp.name}" style="width:180px;max-height:120px;object-fit:cover;border-radius:8px;margin-top:6px" />`
+        : '';
       const marker = L.marker([fp.lat, fp.lng], { icon: pinkIcon })
         .addTo(map)
         .bindPopup(
-          `<div style="font-family:system-ui,sans-serif;font-size:13px;padding:2px 0">
+          `<div style="font-family:system-ui,sans-serif;font-size:13px;padding:2px 0;min-width:120px">
             <strong>${fp.name}</strong>
             ${fp.date ? `<br/><span style="color:#999;font-size:11px">${fp.date}</span>` : ''}
             ${fp.note ? `<br/><span style="color:#666;font-size:12px">${fp.note}</span>` : ''}
+            ${photoHtml}
           </div>`,
+          { maxWidth: 220 },
         );
       markersRef.current.push(marker);
     });

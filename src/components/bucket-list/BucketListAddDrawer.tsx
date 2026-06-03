@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import { BUCKET_CATEGORIES } from '../../types';
-import type { BucketCategory } from '../../types';
 
 interface BucketListAddDrawerProps {
   open: boolean;
@@ -15,10 +14,14 @@ BUCKET_CATEGORIES.forEach((c) => {
   CATEGORY_EMOJI_MAP[c.key] = c.emoji;
 });
 
+const DEFAULT_EMOJIS = ['✨', '💕', '🎯', '🌟', '🎨', '🎵', '📸', '🌍', '🍜', '🏃', '💪', '🎮'];
+
 export default function BucketListAddDrawer({ open, onClose }: BucketListAddDrawerProps) {
   const { identity, addBucketItem } = useSharedAppState();
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<BucketCategory>('other');
+  const [category, setCategory] = useState('other');
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [notes, setNotes] = useState('');
   const [emoji, setEmoji] = useState('✨');
   const [saving, setSaving] = useState(false);
@@ -26,17 +29,22 @@ export default function BucketListAddDrawer({ open, onClose }: BucketListAddDraw
   const handleOpen = () => {
     setTitle('');
     setCategory('other');
+    setCustomCategory('');
+    setShowCustomCategory(false);
     setNotes('');
     setEmoji('✨');
     setSaving(false);
   };
 
+  const finalCategory = showCustomCategory ? customCategory.trim() : category;
+
   const handleSubmit = async () => {
     if (!title.trim() || !identity) return;
+    if (showCustomCategory && !customCategory.trim()) return;
     setSaving(true);
     await addBucketItem({
       title: title.trim(),
-      category,
+      category: finalCategory || 'other',
       notes: notes.trim(),
       emoji,
       createdBy: identity,
@@ -45,7 +53,7 @@ export default function BucketListAddDrawer({ open, onClose }: BucketListAddDraw
     onClose();
   };
 
-  const canSubmit = title.trim().length > 0 && !saving;
+  const canSubmit = title.trim().length > 0 && !saving && (!showCustomCategory || customCategory.trim().length > 0);
 
   return (
     <AnimatePresence onExitComplete={() => {}}>
@@ -53,7 +61,7 @@ export default function BucketListAddDrawer({ open, onClose }: BucketListAddDraw
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/40 z-50"
+            className="fixed inset-0 bg-black/40 z-[1001]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -62,7 +70,7 @@ export default function BucketListAddDrawer({ open, onClose }: BucketListAddDraw
 
           {/* Drawer */}
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-[28px] shadow-lift max-w-lg mx-auto overflow-hidden"
+            className="fixed inset-x-0 bottom-0 z-[1001] bg-white rounded-t-[28px] shadow-lift max-w-lg mx-auto overflow-hidden"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -95,7 +103,7 @@ export default function BucketListAddDrawer({ open, onClose }: BucketListAddDraw
                   图标
                 </label>
                 <div className="flex gap-2 flex-wrap">
-                  {['✨', '💕', '🎯', '🌟', '🎨', '🎵', '📸', '🌍', '🍜', '🏃', '💪', '🎮'].map((e) => (
+                  {DEFAULT_EMOJIS.map((e) => (
                     <button
                       key={e}
                       onClick={() => setEmoji(e)}
@@ -136,9 +144,9 @@ export default function BucketListAddDrawer({ open, onClose }: BucketListAddDraw
                   {BUCKET_CATEGORIES.map(({ key, label, emoji: catEmoji }) => (
                     <button
                       key={key}
-                      onClick={() => setCategory(key)}
+                      onClick={() => { setCategory(key); setShowCustomCategory(false); }}
                       className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 justify-center ${
-                        category === key
+                        !showCustomCategory && category === key
                           ? 'bg-pink/15 text-pink ring-1 ring-pink/30'
                           : 'bg-warm-cream text-text-muted hover:bg-pink/5'
                       }`}
@@ -147,7 +155,29 @@ export default function BucketListAddDrawer({ open, onClose }: BucketListAddDraw
                       <span>{label}</span>
                     </button>
                   ))}
+                  <button
+                    onClick={() => { setShowCustomCategory(true); setCustomCategory(''); }}
+                    className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 justify-center ${
+                      showCustomCategory
+                        ? 'bg-pink/15 text-pink ring-1 ring-pink/30'
+                        : 'bg-warm-cream text-text-muted hover:bg-pink/5'
+                    }`}
+                  >
+                    <span>✏️</span>
+                    <span>自定义</span>
+                  </button>
                 </div>
+                {showCustomCategory && (
+                  <input
+                    type="text"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    placeholder="输入自定义分类名称..."
+                    className="input-field mt-2 text-sm"
+                    autoFocus
+                    maxLength={20}
+                  />
+                )}
               </div>
 
               {/* Notes */}

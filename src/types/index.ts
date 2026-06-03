@@ -74,7 +74,7 @@ export interface LoveLetter {
 
 // ====== 情侣清单 ======
 
-export type BucketCategory = 'travel' | 'food' | 'adventure' | 'learn' | 'life' | 'other';
+export type BucketCategory = string;
 
 export const BUCKET_CATEGORIES: { key: BucketCategory; label: string; emoji: string }[] = [
   { key: 'travel', label: '旅行', emoji: '✈️' },

@@ -12,6 +12,20 @@ export default function BucketListView() {
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<BucketCategory | 'all'>('all');
 
+  // Merge preset categories with custom categories from existing data
+  const allCategories = useMemo(() => {
+    const presetKeys = new Set(BUCKET_CATEGORIES.map((c) => c.key));
+    const customCategories: { key: string; label: string; emoji: string }[] = [];
+    const seen = new Set<string>();
+    state.bucketListItems.forEach((item) => {
+      if (!presetKeys.has(item.category) && !seen.has(item.category)) {
+        seen.add(item.category);
+        customCategories.push({ key: item.category, label: item.category, emoji: '🏷️' });
+      }
+    });
+    return [...BUCKET_CATEGORIES, ...customCategories];
+  }, [state.bucketListItems]);
+
   const filtered = useMemo(() => {
     const source = state.bucketListItems;
     if (filterCategory === 'all') return source;
@@ -110,7 +124,7 @@ export default function BucketListView() {
         >
           全部
         </button>
-        {BUCKET_CATEGORIES.map(({ key, label, emoji }) => (
+        {allCategories.map(({ key, label, emoji }) => (
           <button
             key={key}
             onClick={() => setFilterCategory(filterCategory === key ? 'all' : key)}

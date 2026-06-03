@@ -54,6 +54,9 @@ export default function BucketListItem({ item, onToggle, onDelete, index }: Buck
         {item.completed && item.completedBy && (
           <p className="text-[10px] text-pink/60 mt-0.5">
             {item.completedBy === 'me' ? '我' : 'TA'}完成了这个心愿 💕
+            {item.completedAt && (
+              <> · {new Date(item.completedAt).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</>
+            )}
           </p>
         )}
       </div>
