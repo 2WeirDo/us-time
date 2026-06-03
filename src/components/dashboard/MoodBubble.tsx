@@ -5,7 +5,7 @@ import { MOOD_OPTIONS } from '../../types';
 import { useState } from 'react';
 
 export default function MoodBubble() {
-  const { state, setTodayMood } = useSharedAppState();
+  const { state, identity, setTodayMood } = useSharedAppState();
   const [showPicker, setShowPicker] = useState(false);
   const today = new Date().toISOString().split('T')[0];
 
@@ -17,7 +17,9 @@ export default function MoodBubble() {
   );
 
   const handleMoodPick = (emoji: string) => {
-    setTodayMood({ date: today, author: 'me', mood: emoji });
+    if (identity) {
+      setTodayMood({ date: today, author: identity, mood: emoji });
+    }
     setShowPicker(false);
   };
 
@@ -54,7 +56,10 @@ export default function MoodBubble() {
         <div className="w-px h-8 bg-text-muted/10" />
 
         {/* Partner mood */}
-        <div className="flex flex-col items-center gap-1 p-2">
+        <button
+          onClick={() => setShowPicker(!showPicker)}
+          className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-warm-cream transition-colors"
+        >
           <motion.span
             className="text-2xl"
             key={partnerMood?.mood || 'empty-partner'}
@@ -64,7 +69,7 @@ export default function MoodBubble() {
           <span className="text-[10px] text-text-muted">
             {state.coupleInfo?.partnerName || 'TA'}
           </span>
-        </div>
+        </button>
       </div>
 
       {/* Mood picker popup */}
