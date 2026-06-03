@@ -5,6 +5,7 @@ import DashboardGrid from '../components/dashboard/DashboardGrid';
 import Timeline from '../components/timeline/Timeline';
 import Fab from '../components/ui/Fab';
 import NewPostDrawer from '../components/post/NewPostDrawer';
+import VoiceRecordDrawer from '../components/post/VoiceRecordDrawer';
 import { useSharedAppState } from '../hooks/AppStateContext';
 import { useMilestoneNotifications } from '../hooks/useMilestoneNotifications';
 import { MOOD_OPTIONS } from '../types';
@@ -13,6 +14,7 @@ import type { Post } from '../types';
 export default function HomePage() {
   const { state } = useSharedAppState();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [voiceDrawerOpen, setVoiceDrawerOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [moodFilter, setMoodFilter] = useState<string | null>(null);
@@ -26,6 +28,10 @@ export default function HomePage() {
     setDrawerOpen(true);
   }, []);
 
+  const handleVoiceRecord = useCallback(() => {
+    setVoiceDrawerOpen(true);
+  }, []);
+
   const handleEditPost = useCallback((post: Post) => {
     setEditingPost(post);
     setDrawerOpen(true);
@@ -34,6 +40,10 @@ export default function HomePage() {
   const handleClose = useCallback(() => {
     setDrawerOpen(false);
     setEditingPost(null);
+  }, []);
+
+  const handleVoiceClose = useCallback(() => {
+    setVoiceDrawerOpen(false);
   }, []);
 
   const activeFilters = useMemo(() => {
@@ -147,13 +157,19 @@ export default function HomePage() {
       </section>
 
       {/* Floating Action Button */}
-      <Fab onNewPost={handleNewPost} />
+      <Fab onNewPost={handleNewPost} onVoiceRecord={handleVoiceRecord} />
 
       {/* New / Edit Post Drawer */}
       <NewPostDrawer
         open={drawerOpen}
         onClose={handleClose}
         editingPost={editingPost}
+      />
+
+      {/* Voice Record Drawer */}
+      <VoiceRecordDrawer
+        open={voiceDrawerOpen}
+        onClose={handleVoiceClose}
       />
     </motion.div>
   );

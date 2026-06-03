@@ -4,14 +4,20 @@ import { Plus, Mic, FileText } from 'lucide-react';
 
 interface FabProps {
   onNewPost?: () => void;
+  onVoiceRecord?: () => void;
 }
 
-export default function Fab({ onNewPost }: FabProps) {
+export default function Fab({ onNewPost, onVoiceRecord }: FabProps) {
   const [open, setOpen] = useState(false);
 
   const handleNewPost = () => {
     setOpen(false);
     onNewPost?.();
+  };
+
+  const handleVoiceRecord = () => {
+    setOpen(false);
+    onVoiceRecord?.();
   };
 
   return (
@@ -42,7 +48,7 @@ export default function Fab({ onNewPost }: FabProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ delay: 0.1 }}
-              onClick={handleNewPost}
+              onClick={handleVoiceRecord}
             >
               <Mic size={18} className="text-pink-dark" />
               录制语音

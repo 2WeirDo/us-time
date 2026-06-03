@@ -22,9 +22,22 @@ CREATE TABLE IF NOT EXISTS posts (
   author TEXT NOT NULL CHECK (author IN ('me', 'partner')),
   content TEXT DEFAULT '',
   photos TEXT[] DEFAULT '{}',
+  audio TEXT,
   mood TEXT,
+  reactions JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- 为已有数据库添加缺失列（如果列不存在则添加）
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'posts' AND column_name = 'audio') THEN
+    ALTER TABLE posts ADD COLUMN audio TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'posts' AND column_name = 'reactions') THEN
+    ALTER TABLE posts ADD COLUMN reactions JSONB DEFAULT '{}';
+  END IF;
+END $$;
 
 -- 3. 纪念日表
 CREATE TABLE IF NOT EXISTS milestones (

@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { AppStateProvider, useSharedAppState } from './hooks/AppStateContext';
 import { ToastProvider } from './components/ui/Toast';
 import { isSupabaseConfigured } from './lib/supabase';
-import { fetchCoupleSettings } from './lib/db';
+import { fetchCoupleSettings, verifyPasscode } from './lib/db';
 import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/HomePage';
 import SupabaseSetup from './components/onboarding/SupabaseSetup';
@@ -27,7 +27,7 @@ type Phase =
   ;
 
 function AppRoutes() {
-  const { state, loading, unlock, setCoupleInfo } = useSharedAppState();
+  const { state, loading, unlock, setCoupleInfo, getRememberedAuth } = useSharedAppState();
   const [phase, setPhase] = useState<Phase>(
     isSupabaseConfigured() ? 'checking-first-time' : 'config-supabase'
   );
@@ -43,8 +43,9 @@ function AppRoutes() {
   // When Supabase is configured, check if it's first time
   useEffect(() => {
     if (phase !== 'checking-first-time') return;
-    fetchCoupleSettings().then((settings) => {
+    fetchCoupleSettings().then(async (settings) => {
       if (!settings) {
+        // No settings in DB — first time
         setPhase('first-time-passcode');
       } else {
         setReturningAvatars({
@@ -53,6 +54,21 @@ function AppRoutes() {
           myName: settings.coupleInfo.myName,
           partnerName: settings.coupleInfo.partnerName,
         });
+
+        // Try auto-login with remembered passcode
+        const remembered = getRememberedAuth();
+        if (remembered) {
+          const valid = await verifyPasscode(remembered.passcode);
+          if (valid) {
+            // Auto-login success — skip passcode screen
+            unlock(remembered.ident, remembered.passcode);
+            setPhase('loading-data');
+            return;
+          }
+          // Passcode invalid (changed from another device) — clear it
+          localStorage.removeItem('us-time-remembered');
+        }
+
         setPhase('returning-passcode');
       }
     });
@@ -109,7 +125,7 @@ function AppRoutes() {
         <SetupWizard
           onComplete={async (coupleInfo) => {
             await setCoupleInfo(coupleInfo, pendingPasscode);
-            unlock(pendingIdentity);
+            unlock(pendingIdentity, pendingPasscode);
             setPhase('loading-data');
           }}
         />
@@ -123,8 +139,8 @@ function AppRoutes() {
       <AppLayout title="UsTime">
         <PasscodeScreen
           isFirstTime={false}
-          onUnlock={(identity) => {
-            unlock(identity);
+          onUnlock={(identity, passcode) => {
+            unlock(identity, passcode);
             setPhase('loading-data');
           }}
           onNewSetup={() => setPhase('first-time-passcode')}

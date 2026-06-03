@@ -69,7 +69,7 @@ export default function PasscodeScreen({
 
     const valid = await verifyPasscode(passcode);
     if (valid) {
-      onUnlock(identity);
+      onUnlock(identity, passcode);
     } else {
       setError('密码不正确');
       setPasscode('');

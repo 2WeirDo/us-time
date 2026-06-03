@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, User, Save, Loader2, Mic, Square, Play, Trash2 } from 'lucide-react';
+import { X, Send, User, Save, Loader2 } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import PhotoUpload from './PhotoUpload';
 import MoodPicker from './MoodPicker';
-import { uploadPhotos, uploadAudio } from '../../lib/storage';
+import { uploadPhotos } from '../../lib/storage';
 import type { Post } from '../../types';
 
 interface NewPostDrawerProps {
@@ -17,18 +17,10 @@ export default function NewPostDrawer({ open, onClose, editingPost }: NewPostDra
   const { state, addPost, editPost } = useSharedAppState();
   const [content, setContent] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
-  const [audio, setAudio] = useState<string | null>(null);
   const [mood, setMood] = useState('');
   const [author, setAuthor] = useState<'me' | 'partner'>('me');
   const [showMood, setShowMood] = useState(false);
   const [uploading, setUploading] = useState(false);
-
-  // Voice recording state
-  const [recording, setRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isEditing = !!editingPost;
 
@@ -37,7 +29,6 @@ export default function NewPostDrawer({ open, onClose, editingPost }: NewPostDra
     if (open && editingPost) {
       setContent(editingPost.content);
       setPhotos(editingPost.photos);
-      setAudio(editingPost.audio || null);
       setMood(editingPost.mood || '');
       setAuthor(editingPost.author);
       setShowMood(false);
@@ -45,95 +36,25 @@ export default function NewPostDrawer({ open, onClose, editingPost }: NewPostDra
       // Reset for new post
       setContent('');
       setPhotos([]);
-      setAudio(null);
       setMood('');
       setAuthor('me');
       setShowMood(false);
     }
   }, [open, editingPost]);
 
-  // Clean up recorder on unmount
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-      }
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
-
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = recorder;
-      const chunks: Blob[] = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setAudio(reader.result as string);
-        };
-        reader.readAsDataURL(blob);
-        // Stop all tracks
-        stream.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
-      };
-
-      recorder.start();
-      setRecording(true);
-      setRecordingTime(0);
-      timerRef.current = setInterval(() => {
-        setRecordingTime((t) => t + 1);
-      }, 1000);
-    } catch {
-      // Permission denied or no mic
-    }
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-      setRecording(false);
-    }
-  }, []);
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
   const handleSubmit = async () => {
-    if (!content.trim() && photos.length === 0 && !audio) return;
+    if (!content.trim() && photos.length === 0) return;
 
     setUploading(true);
 
     // Upload photos to Supabase Storage (skips already-uploaded URLs)
     const photoUrls = await uploadPhotos(photos);
 
-    // Upload audio to Storage if it's base64
-    let audioUrl = audio;
-    if (audio && !audio.startsWith('http')) {
-      const uploaded = await uploadAudio(audio);
-      if (uploaded) audioUrl = uploaded;
-    }
-
     if (isEditing && editingPost) {
       editPost(editingPost.id, {
         content: content.trim(),
         photos: photoUrls,
-        audio: audioUrl || undefined,
+        audio: editingPost.audio || null,
         mood: mood || null,
       });
     } else {
@@ -141,7 +62,7 @@ export default function NewPostDrawer({ open, onClose, editingPost }: NewPostDra
         author,
         content: content.trim(),
         photos: photoUrls,
-        audio: audioUrl || undefined,
+        audio: undefined,
         mood: mood || undefined,
         reactions: {},
       });
@@ -151,7 +72,7 @@ export default function NewPostDrawer({ open, onClose, editingPost }: NewPostDra
     onClose();
   };
 
-  const canSubmit = content.trim().length > 0 || photos.length > 0 || !!audio;
+  const canSubmit = content.trim().length > 0 || photos.length > 0;
 
   return (
     <AnimatePresence>
@@ -232,52 +153,6 @@ export default function NewPostDrawer({ open, onClose, editingPost }: NewPostDra
                 className="w-full min-h-[100px] bg-warm-cream rounded-2xl p-4 text-text-primary placeholder:text-text-muted/50 resize-none focus:outline-none focus:ring-2 focus:ring-pink/20 text-sm leading-relaxed"
                 autoFocus
               />
-            </div>
-
-            {/* Voice Recorder */}
-            <div className="px-5 pb-3">
-              {audio ? (
-                <div className="flex items-center gap-3 bg-warm-cream rounded-2xl p-3">
-                  <button
-                    onClick={() => {
-                      const audioEl = document.getElementById('voice-preview') as HTMLAudioElement;
-                      if (audioEl) audioEl.play();
-                    }}
-                    className="p-2 rounded-xl bg-pink text-white hover:bg-pink-dark transition-colors"
-                  >
-                    <Play size={16} />
-                  </button>
-                  <audio id="voice-preview" src={audio} className="hidden" />
-                  <span className="text-sm text-text-primary flex-1">语音消息</span>
-                  <button
-                    onClick={() => setAudio(null)}
-                    className="p-2 rounded-xl text-text-muted hover:text-pink transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ) : recording ? (
-                <div className="flex items-center gap-3 bg-warm-cream rounded-2xl p-3">
-                  <div className="w-3 h-3 rounded-full bg-red animate-pulse" />
-                  <span className="text-sm text-pink font-medium flex-1">
-                    录音中 {formatTime(recordingTime)}
-                  </span>
-                  <button
-                    onClick={stopRecording}
-                    className="p-2 rounded-xl bg-red text-white hover:bg-red/80 transition-colors"
-                  >
-                    <Square size={16} />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={startRecording}
-                  className="flex items-center gap-2 text-sm text-text-muted hover:text-pink transition-colors"
-                >
-                  <Mic size={16} />
-                  录制语音
-                </button>
-              )}
             </div>
 
             {/* Mood picker toggle */}

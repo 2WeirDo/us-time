@@ -31,6 +31,7 @@ const LOCAL_KEYS = {
   passcode: 'us-time-passcode',
   theme: 'us-time-theme',
   moods: 'us-time-moods',
+  remembered: 'us-time-remembered', // stored passcode for auto-login
 };
 
 /** Day key that shifts at 6am instead of midnight */
@@ -144,9 +145,13 @@ export function useAppState() {
   // ====== Auth ======
 
   const unlock = useCallback(
-    (ident: 'me' | 'partner') => {
+    (ident: 'me' | 'partner', passcode?: string) => {
       setIdentityState(ident);
       localStorage.setItem(LOCAL_KEYS.identity, ident);
+      // Remember passcode for auto-login next time
+      if (passcode) {
+        localStorage.setItem(LOCAL_KEYS.remembered, JSON.stringify({ ident, passcode }));
+      }
       setUnlocked(true);
     },
     []
@@ -156,6 +161,18 @@ export function useAppState() {
     setUnlocked(false);
     setIdentityState(null);
     localStorage.removeItem(LOCAL_KEYS.identity);
+    localStorage.removeItem(LOCAL_KEYS.remembered);
+  }, []);
+
+  /** Get stored credentials for auto-login, or null if not remembered */
+  const getRememberedAuth = useCallback((): { ident: 'me' | 'partner'; passcode: string } | null => {
+    try {
+      const stored = localStorage.getItem(LOCAL_KEYS.remembered);
+      if (!stored) return null;
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
   }, []);
 
   // ====== Posts ======
@@ -369,6 +386,7 @@ export function useAppState() {
     setIdentityState(null);
     localStorage.removeItem(LOCAL_KEYS.identity);
     localStorage.removeItem(LOCAL_KEYS.passcode);
+    localStorage.removeItem(LOCAL_KEYS.remembered);
   }, []);
 
   return {
@@ -378,6 +396,7 @@ export function useAppState() {
     unlocked,
     unlock,
     lock,
+    getRememberedAuth,
     addPost,
     editPost,
     deletePost,
