@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="属于两个人的私密空间，记录在一起的每一天。一个温暖的情侣时光胶囊。" />
+    <meta name="theme-color" content="#E85D75" />
+    <meta name="application-name" content="UsTime" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="UsTime" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="UsTime - 我们的时光" />
+    <meta property="og:description" content="属于两个人的私密空间，记录在一起的每一天" />
+    <meta property="og:site_name" content="UsTime" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="UsTime - 我们的时光" />
+    <meta name="twitter:description" content="属于两个人的私密空间，记录在一起的每一天" />
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💕</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>UsTime - 我们的时光</title>
+
+    <style>
+      /* Inline loading skeleton — shown before JS loads */
+      #root:empty::before {
+        content: '';
+        display: block;
+        min-height: 100vh;
+        min-height: 100dvh;
+        background: #FFF5F7;
+        background-image: radial-gradient(circle, rgba(255, 105, 180, 0.04) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      /* Animated heart in center while loading */
+      #root:empty::after {
+        content: '💕';
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2.5rem;
+        animation: pulse 1s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        50% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.9); }
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      // Apply theme synchronously before first paint to avoid flash
+      (function() {
+        var theme = localStorage.getItem('us-time-theme');
+        var isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) document.body.classList.add('dark');
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
