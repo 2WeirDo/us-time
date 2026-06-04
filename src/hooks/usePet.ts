@@ -8,8 +8,9 @@ import {
 } from '../lib/constants';
 import { getDayKey } from '../lib/utils';
 
-/** Daily limits to prevent spamming feed/pet */
-const DAILY_FEED_LIMIT = 3;
+/** Feed cooldown: at most once per hour */
+const FEED_COOLDOWN_HOURS = 1;
+/** Daily limit for petting */
 const DAILY_INTERACT_LIMIT = 5;
 
 interface UsePetDeps {
@@ -41,7 +42,23 @@ function incrementDailyCount(key: string): void {
   }
 }
 
-const FEED_COUNT_KEY = 'us-time-pet-feed-log';
+/** Check if enough time has passed since the last feed */
+function canFeed(lastFedAt: string): boolean {
+  const lastTime = new Date(lastFedAt).getTime();
+  const now = Date.now();
+  const hoursSince = (now - lastTime) / (1000 * 60 * 60);
+  return hoursSince >= FEED_COOLDOWN_HOURS;
+}
+
+/** Format remaining cooldown time in minutes */
+function formatCooldown(lastFedAt: string): string {
+  const lastTime = new Date(lastFedAt).getTime();
+  const minutesLeft = 60 - Math.floor((Date.now() - lastTime) / (1000 * 60));
+  if (minutesLeft <= 0) return '';
+  if (minutesLeft === 60) return '1 小时';
+  return `${minutesLeft} 分钟`;
+}
+
 const INTERACT_COUNT_KEY = 'us-time-pet-interact-log';
 
 export function usePet({ setState, toast }: UsePetDeps) {
@@ -58,9 +75,10 @@ export function usePet({ setState, toast }: UsePetDeps) {
       const pet = prev.petState;
       if (!pet) return prev;
 
-      // Check daily feed limit
-      if (getDailyCount(FEED_COUNT_KEY) >= DAILY_FEED_LIMIT) {
-        toast('今天的喂食次数用完啦，明天再来吧～ 🍖', 'info');
+      // Check hourly cooldown
+      if (!canFeed(pet.lastFedAt)) {
+        const remaining = formatCooldown(pet.lastFedAt);
+        toast(`喂得太频繁啦～ ${remaining}后再来吧 🕐`, 'info');
         return prev;
       }
 
@@ -77,7 +95,6 @@ export function usePet({ setState, toast }: UsePetDeps) {
         lastFedAt: now,
         lastInteractionAt: now,
       };
-      incrementDailyCount(FEED_COUNT_KEY);
       toast(`喂食成功！+${PET_FEED_HAPPINESS} ❤️`, 'success');
       savePetStateDB(newPet).catch((e) => console.error('feedPet error:', e));
       return { ...prev, petState: newPet };
