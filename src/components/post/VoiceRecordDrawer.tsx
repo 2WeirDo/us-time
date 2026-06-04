@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, User, Loader2, Mic, Square, Play, Trash2, AlertCircle } from 'lucide-react';
+import { X, Send, Loader2, Mic, Square, Play, Trash2, AlertCircle } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
+import AuthorToggle from '../ui/AuthorToggle';
 import { useToast } from '../ui/Toast';
 import { uploadAudio } from '../../lib/storage';
 
@@ -215,30 +216,12 @@ export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerPr
 
             {/* Author toggle */}
             <div className="px-5 pb-4">
-              <div className="flex items-center gap-2 p-1 bg-warm-cream rounded-xl">
-                <button
-                  onClick={() => setAuthor('me')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                    author === 'me'
-                      ? 'bg-white shadow-sm text-pink'
-                      : 'text-text-muted'
-                  }`}
-                >
-                  <User size={14} />
-                  {state.coupleInfo?.myName || '我'}
-                </button>
-                <button
-                  onClick={() => setAuthor('partner')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                    author === 'partner'
-                      ? 'bg-white shadow-sm text-pink'
-                      : 'text-text-muted'
-                  }`}
-                >
-                  <User size={14} />
-                  {state.coupleInfo?.partnerName || 'TA'}
-                </button>
-              </div>
+              <AuthorToggle
+                value={author}
+                onChange={setAuthor}
+                myName={state.coupleInfo?.myName || '我'}
+                partnerName={state.coupleInfo?.partnerName || 'TA'}
+              />
             </div>
 
             {/* Error message */}

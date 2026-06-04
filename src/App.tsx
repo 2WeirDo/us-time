@@ -5,6 +5,7 @@ import { AppStateProvider, useSharedAppState } from './hooks/AppStateContext';
 import { ToastProvider } from './components/ui/Toast';
 import { isSupabaseConfigured } from './lib/supabase';
 import { fetchCoupleSettings, verifyPasscode } from './lib/db';
+import { LOCAL_KEYS } from './lib/constants';
 import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/HomePage';
 import SupabaseSetup from './components/onboarding/SupabaseSetup';
@@ -70,7 +71,7 @@ function AppRoutes() {
             return;
           }
           // Passcode invalid (changed from another device) — clear it
-          localStorage.removeItem('us-time-remembered');
+          localStorage.removeItem(LOCAL_KEYS.remembered);
         }
 
         setPhase('returning-passcode');

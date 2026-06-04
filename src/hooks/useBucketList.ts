@@ -61,20 +61,17 @@ export function useBucketList({ setState, identity, unlocked, toast, loadData }:
       const ident = identity;
       if (!ident) return;
 
+      // Snapshot the current item for rollback
+      let previousItem: BucketListItem | undefined;
       setState((prev) => {
         const item = prev.bucketListItems.find((b) => b.id === itemId);
         if (!item) return prev;
+        previousItem = { ...item };
 
         const now = new Date().toISOString();
         const updates = item.completed
           ? { completed: false, completedBy: null, completedAt: null }
           : { completed: true, completedBy: ident as 'me' | 'partner', completedAt: now };
-
-        updateBucketItemDB(itemId, {
-          completed: updates.completed,
-          completedBy: updates.completedBy,
-          completedAt: updates.completedAt,
-        }).catch((e) => console.error('toggleBucketCompletion error:', e));
 
         return {
           ...prev,
@@ -90,8 +87,22 @@ export function useBucketList({ setState, identity, unlocked, toast, loadData }:
           ),
         };
       });
+
+      // Persist to DB and rollback on failure
+      if (previousItem) {
+        const newCompleted = !previousItem.completed;
+        const success = await updateBucketItemDB(itemId, {
+          completed: newCompleted,
+          completedBy: newCompleted ? (ident as 'me' | 'partner') : null,
+          completedAt: newCompleted ? new Date().toISOString() : null,
+        });
+        if (!success) {
+          toast('操作失败，请重试', 'error');
+          loadData();
+        }
+      }
     },
-    [identity, setState]
+    [identity, setState, toast, loadData]
   );
 
   const deleteBucketItem = useCallback(

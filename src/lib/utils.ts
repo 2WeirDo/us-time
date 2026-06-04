@@ -22,3 +22,28 @@ export function getDayKey(): string {
   }
   return now.toISOString().split('T')[0];
 }
+
+/** Format an ISO date string to a human-readable relative time (Chinese).
+ *  Used by TimelinePost and CommentSection. */
+export function formatRelativeTime(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (hours === 0) {
+      const mins = Math.floor(diffMs / (1000 * 60));
+      return mins <= 1 ? '刚刚' : `${mins} 分钟前`;
+    }
+    return `${hours} 小时前`;
+  }
+  if (diffDays === 1) return '昨天';
+  if (diffDays < 7) return `${diffDays} 天前`;
+
+  return date.toLocaleDateString('zh-CN', {
+    month: 'long',
+    day: 'numeric',
+  });
+}

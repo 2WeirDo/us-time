@@ -52,6 +52,7 @@ export default function PostReactions({ postId, reactions }: PostReactionsProps)
         <button
           onClick={() => setShowPicker(!showPicker)}
           className="flex items-center gap-1 text-xs text-text-muted/40 hover:text-pink/60 transition-colors"
+          aria-label="添加反应"
         >
           <SmilePlus size={13} />
         </button>
@@ -72,6 +73,7 @@ export default function PostReactions({ postId, reactions }: PostReactionsProps)
                   <button
                     key={emoji}
                     onClick={() => handleToggle(emoji)}
+                    aria-label={`反应 ${emoji}`}
                     className={`text-lg p-1.5 rounded-xl transition-all hover:scale-125 ${
                       isActive ? 'bg-pink/15 scale-110' : 'hover:bg-warm-cream'
                     }`}

@@ -454,11 +454,12 @@ export default function SettingsPage() {
           </div>
         ) : (
           <button
-            onClick={() => {
+            onClick={async () => {
               const code = generatePairingCode();
               if (code) {
                 setPairingCode(code);
-                setPairingQR(generatePairingQRCode(code));
+                const qr = await generatePairingQRCode(code);
+                setPairingQR(qr);
               }
             }}
             className="btn-primary w-full flex items-center justify-center gap-2 text-sm"
@@ -508,7 +509,7 @@ export default function SettingsPage() {
 
       {/* Footer */}
       <p className="text-center text-xs text-text-muted/40 py-4">
-        UsTime — 属于多多和拖拖的私密空间 💕
+        UsTime — 属于{coupleInfo.myName}和{coupleInfo.partnerName}的私密空间 💕
       </p>
     </motion.div>
   );

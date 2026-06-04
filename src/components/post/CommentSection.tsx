@@ -1,31 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, Trash2 } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
+import { formatRelativeTime } from '../../lib/utils';
 import type { PostComment } from '../../types';
 
 interface CommentSectionProps {
   postId: string;
-}
-
-function formatCommentTime(isoString: string): string {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-
-  if (diffMin < 1) return '刚刚';
-  if (diffMin < 60) return `${diffMin} 分钟前`;
-
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} 小时前`;
-
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 7) return `${diffDay} 天前`;
-
-  return date.toLocaleDateString('zh-CN', {
-    month: 'short',
-    day: 'numeric',
-  });
 }
 
 export default function CommentSection({ postId }: CommentSectionProps) {
@@ -133,6 +113,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
             <button
               onClick={handleSubmit}
               disabled={!input.trim()}
+              aria-label="发送评论"
               className="flex-shrink-0 w-8 h-8 rounded-full bg-pink/10 hover:bg-pink text-pink hover:text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Send size={13} />
@@ -196,7 +177,7 @@ function CommentBubble({
             {authorName}
           </span>
           <span className="text-[10px] text-text-muted/40">
-            {formatCommentTime(comment.createdAt)}
+            {formatRelativeTime(comment.createdAt)}
           </span>
         </div>
         <p className="text-xs text-text-primary leading-relaxed break-words">
@@ -207,6 +188,7 @@ function CommentBubble({
         {showDelete && isOwn && (
           <button
             onClick={onDelete}
+            aria-label="删除评论"
             className="mt-0.5 flex items-center gap-1 text-[10px] text-red/50 hover:text-red transition-colors"
           >
             <Trash2 size={10} />

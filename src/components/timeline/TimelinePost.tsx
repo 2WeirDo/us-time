@@ -3,6 +3,8 @@ import { Trash2, Pencil, Play, Pause } from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
 import type { Post } from '../../types';
 import { useSharedAppState } from '../../hooks/AppStateContext';
+import { formatRelativeTime } from '../../lib/utils';
+import PhotoGrid from '../ui/PhotoGrid';
 import PhotoLightbox from './PhotoLightbox';
 import PostReactions from '../post/PostReactions';
 import CommentSection from '../post/CommentSection';
@@ -13,33 +15,9 @@ interface TimelinePostProps {
   onEdit?: (post: Post) => void;
 }
 
-function formatTime(isoString: string): string {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    if (hours === 0) {
-      const mins = Math.floor(diffMs / (1000 * 60));
-      return mins <= 1 ? '刚刚' : `${mins} 分钟前`;
-    }
-    return `${hours} 小时前`;
-  }
-  if (diffDays === 1) return '昨天';
-  if (diffDays < 7) return `${diffDays} 天前`;
-
-  return date.toLocaleDateString('zh-CN', {
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
 export default function TimelinePost({ post, index, onEdit }: TimelinePostProps) {
   const { state, identity, deletePost } = useSharedAppState();
   const [showDelete, setShowDelete] = useState(false);
-  const [imgError, setImgError] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPress = useRef(false);
@@ -112,7 +90,7 @@ export default function TimelinePost({ post, index, onEdit }: TimelinePostProps)
             {authorName}
           </span>
           <span className="text-xs text-text-muted/60">
-            {formatTime(post.createdAt)}
+            {formatRelativeTime(post.createdAt)}
           </span>
           {post.mood && (
             <span className="text-sm ml-auto">{post.mood}</span>
@@ -134,37 +112,10 @@ export default function TimelinePost({ post, index, onEdit }: TimelinePostProps)
         )}
 
         {/* Photos */}
-        {post.photos.length > 0 && !imgError && (
-          <div
-            className={`mt-2 grid gap-1.5 rounded-2xl overflow-hidden ${
-              post.photos.length === 1
-                ? 'grid-cols-1'
-                : post.photos.length === 2
-                  ? 'grid-cols-2'
-                  : post.photos.length === 3
-                    ? 'grid-cols-2 grid-rows-2'
-                    : 'grid-cols-2'
-            }`}
-          >
-            {post.photos.slice(0, 4).map((photo, i) => (
-              <div
-                key={i}
-                className={`relative cursor-pointer ${
-                  post.photos.length === 3 && i === 0 ? 'row-span-2' : ''
-                }`}
-                onClick={() => setLightboxIndex(i)}
-              >
-                <img
-                  src={photo}
-                  alt={`照片 ${i + 1}`}
-                  className="w-full h-32 object-cover hover:scale-105 transition-transform duration-200"
-                  onError={() => setImgError(true)}
-                  loading="lazy"
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        <PhotoGrid
+          photos={post.photos}
+          onPhotoClick={(i) => setLightboxIndex(i)}
+        />
 
         {/* Reactions */}
         <PostReactions postId={post.id} reactions={post.reactions || {}} />
@@ -247,6 +198,7 @@ function AudioPlayer({ src }: { src: string }) {
     <div className="flex items-center gap-3 bg-warm-cream rounded-2xl px-3 py-2.5">
       <button
         onClick={togglePlay}
+        aria-label={playing ? '暂停播放' : '播放语音'}
         className="flex-shrink-0 w-8 h-8 rounded-full bg-pink text-white flex items-center justify-center hover:bg-pink-dark transition-colors"
       >
         {playing ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
