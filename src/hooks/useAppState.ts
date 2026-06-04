@@ -32,6 +32,7 @@ import { useBucketList } from './useBucketList';
 import { useFootprints } from './useFootprints';
 import { usePet } from './usePet';
 import { useMoodTheme } from './useMoodTheme';
+import { useComments } from './useComments';
 import { useDataManagement } from './useDataManagement';
 
 const DEFAULT_STATE: AppState = {
@@ -129,6 +130,7 @@ export function useAppState() {
   const footprints = useFootprints({ setState, unlocked, toast, loadData });
   const pet = usePet({ setState, toast });
   const moodTheme = useMoodTheme({ setState });
+  const commentModule = useComments({ unlocked, identity, toast });
   const dataMgmt = useDataManagement({ state, setState, toast, lock: auth.lock });
 
   // ---- Settings (couple info) ----
@@ -208,6 +210,8 @@ export function useAppState() {
     ...footprints,
     // Pet
     ...pet,
+    // Comments
+    ...commentModule,
     // Data management
     ...dataMgmt,
   };

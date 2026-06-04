@@ -112,6 +112,16 @@ export interface Footprint {
   createdAt: string;
 }
 
+// ====== 评论 ======
+
+export interface PostComment {
+  id: string;
+  postId: string;
+  author: 'me' | 'partner';
+  content: string;
+  createdAt: string;
+}
+
 // ====== 虚拟宠物 ======
 
 export type PetType = 'cat' | 'bunny' | 'bear' | 'dog';

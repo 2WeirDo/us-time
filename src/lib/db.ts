@@ -1,5 +1,5 @@
 import { getSupabase } from './supabase';
-import type { Post, Milestone, CoupleInfo } from '../types';
+import type { Post, Milestone, CoupleInfo, PostComment } from '../types';
 
 // ====== Posts ======
 
@@ -554,6 +554,98 @@ function mapPetState(db: any): PetState {
   };
 }
 
+// ====== Comments ======
+
+export async function fetchComments(postId?: string): Promise<PostComment[]> {
+  const sb = getSupabase();
+  if (!sb) return [];
+
+  let query = sb
+    .from('comments')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (postId) {
+    query = query.eq('post_id', postId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('fetchComments error:', error);
+    return [];
+  }
+
+  return (data || []).map(mapComment);
+}
+
+export async function createComment(
+  comment: Omit<PostComment, 'id' | 'createdAt'>
+): Promise<PostComment | null> {
+  const sb = getSupabase();
+  if (!sb) return null;
+
+  const { data, error } = await sb
+    .from('comments')
+    .insert({
+      post_id: comment.postId,
+      author: comment.author,
+      content: comment.content,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('createComment error:', error);
+    return null;
+  }
+
+  return mapComment(data);
+}
+
+export async function deleteComment(commentId: string): Promise<boolean> {
+  const sb = getSupabase();
+  if (!sb) return false;
+  const { error } = await sb.from('comments').delete().eq('id', commentId);
+  return !error;
+}
+
+export function subscribeToComments(
+  onInsert: (comment: PostComment) => void,
+  onDelete: (commentId: string) => void
+): () => void {
+  const sb = getSupabase();
+  if (!sb) return () => {};
+
+  const channel = sb
+    .channel('comments-changes')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'comments' },
+      (payload) => onInsert(mapComment(payload.new as any))
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'comments' },
+      (payload) => onDelete((payload.old as any).id)
+    )
+    .subscribe();
+
+  return () => {
+    channel.unsubscribe();
+  };
+}
+
+function mapComment(db: any): PostComment {
+  return {
+    id: db.id,
+    postId: db.post_id,
+    author: db.author,
+    content: db.content,
+    createdAt: db.created_at,
+  };
+}
+
 /** Delete ALL data from every table — used by full app reset.
  *  Returns the number of tables that failed (0 = all success). */
 export async function clearAllSupabaseData(): Promise<number> {
@@ -568,6 +660,7 @@ export async function clearAllSupabaseData(): Promise<number> {
     'footprints',
     'pet_state',
     'couple_settings',
+    'comments',
   ];
 
   const results = await Promise.all(

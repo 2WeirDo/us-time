@@ -5,6 +5,7 @@ import type { Post } from '../../types';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import PhotoLightbox from './PhotoLightbox';
 import PostReactions from '../post/PostReactions';
+import CommentSection from '../post/CommentSection';
 
 interface TimelinePostProps {
   post: Post;
@@ -36,7 +37,7 @@ function formatTime(isoString: string): string {
 }
 
 export default function TimelinePost({ post, index, onEdit }: TimelinePostProps) {
-  const { state, deletePost } = useSharedAppState();
+  const { state, identity, deletePost } = useSharedAppState();
   const [showDelete, setShowDelete] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -70,6 +71,7 @@ export default function TimelinePost({ post, index, onEdit }: TimelinePostProps)
   }, [showDelete]);
 
   const isMe = post.author === 'me';
+  const isOwnPost = post.author === identity;
   const authorName = isMe
     ? state.coupleInfo?.myName || '我'
     : state.coupleInfo?.partnerName || 'TA';
@@ -167,8 +169,11 @@ export default function TimelinePost({ post, index, onEdit }: TimelinePostProps)
         {/* Reactions */}
         <PostReactions postId={post.id} reactions={post.reactions || {}} />
 
-        {/* Edit & Delete buttons (shown after long press) */}
-        {showDelete && (
+        {/* Comments */}
+        <CommentSection postId={post.id} />
+
+        {/* Edit & Delete buttons — only for the author */}
+        {showDelete && isOwnPost && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}

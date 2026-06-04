@@ -508,7 +508,7 @@ export default function SettingsPage() {
 
       {/* Footer */}
       <p className="text-center text-xs text-text-muted/40 py-4">
-        UsTime — 属于两个人的私密空间 💕
+        UsTime — 属于多多和拖拖的私密空间 💕
       </p>
     </motion.div>
   );
