@@ -240,7 +240,7 @@ export default function LetterCanvas({ onCanvasReady }: LetterCanvasProps) {
         {/* Placeholder text */}
         {strokesRef.current.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-text-muted/20 dark:text-white/[0.07] text-sm">
-            在这里写下你想说的话...
+            在这里进行绘画...
           </div>
         )}
         <canvas

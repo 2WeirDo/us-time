@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, MailOpen } from 'lucide-react';
+import { X, Clock, MailOpen, ImageOff } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import type { LoveLetter } from '../../types';
 
@@ -11,11 +11,13 @@ interface LetterDrawerProps {
 
 export default function LetterDrawer({ letter, onClose }: LetterDrawerProps) {
   const { markLetterRead } = useSharedAppState();
+  const [imageError, setImageError] = useState(false);
 
   // Mark as read when opened
   useEffect(() => {
     if (letter && !letter.read) {
       markLetterRead(letter.id);
+      setImageError(false); // reset error state when a new letter opens
     }
   }, [letter, letter?.id, letter?.read, markLetterRead]);
 
@@ -90,7 +92,7 @@ export default function LetterDrawer({ letter, onClose }: LetterDrawerProps) {
               )}
 
               {/* Handwritten image */}
-              {letter.imageUrl && (
+              {letter.imageUrl && !imageError && (
                 <motion.div
                   className="rounded-2xl overflow-hidden mb-4 border border-pink/10 dark:border-white/[0.06] bg-white dark:bg-[#3D2B3E]"
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -101,8 +103,15 @@ export default function LetterDrawer({ letter, onClose }: LetterDrawerProps) {
                     src={letter.imageUrl}
                     alt="手写信"
                     className="w-full h-auto"
+                    onError={() => setImageError(true)}
                   />
                 </motion.div>
+              )}
+              {letter.imageUrl && imageError && (
+                <div className="rounded-2xl mb-4 border border-pink/10 dark:border-white/[0.06] bg-warm-cream dark:bg-white/[0.04] flex items-center justify-center gap-2 py-12 text-text-muted/40 text-sm">
+                  <ImageOff size={18} />
+                  <span>手写信图片加载失败</span>
+                </div>
               )}
 
               {/* Message */}

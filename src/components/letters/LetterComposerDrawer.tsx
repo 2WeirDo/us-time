@@ -25,7 +25,9 @@ export default function LetterComposerDrawer({ open, onClose }: LetterComposerDr
     setTitle('');
     setMessage('');
     setSaving(false);
-    getCanvasDataUrlRef.current = null;
+    // Don't reset canvas ref here — React effects run bottom-up (children before parents),
+    // so LetterCanvas's useEffect sets the ref first, then onAnimationStart in the parent
+    // motion.div fires this callback and would incorrectly null it out.
   };
 
   const handleSubmit = async () => {
