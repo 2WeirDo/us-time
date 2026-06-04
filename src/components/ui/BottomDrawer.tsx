@@ -13,7 +13,7 @@ interface BottomDrawerProps {
   submitDisabled?: boolean;
   submitLoading?: boolean;
   submitIcon?: ReactNode;
-  /** z-index override, defaults to 50 */
+  /** z-index override, defaults to 1000 (above Leaflet's ~700 max) */
   zIndex?: number;
   /** Called when drawer animation starts (for resetting form state) */
   onOpen?: () => void;
@@ -44,7 +44,7 @@ export default function BottomDrawer({
   submitDisabled = false,
   submitLoading = false,
   submitIcon,
-  zIndex = 50,
+  zIndex = 1000,
   onOpen,
   contentMaxHeight = '65vh',
 }: BottomDrawerProps) {
@@ -96,7 +96,7 @@ export default function BottomDrawer({
 
             {/* Submit button */}
             {onSubmit && (
-              <div className="px-5 pb-8 pt-2">
+              <div className="px-5 pb-24 pt-2">
                 <button
                   onClick={onSubmit}
                   disabled={submitDisabled || submitLoading}

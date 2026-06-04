@@ -4,9 +4,11 @@ import BottomTabBar from './BottomTabBar';
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
+  /** Show the bottom tab bar. Defaults to false to prevent showing on auth screens. */
+  showTabBar?: boolean;
 }
 
-export default function AppLayout({ children, title }: AppLayoutProps) {
+export default function AppLayout({ children, title, showTabBar = false }: AppLayoutProps) {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-warm-cream flex flex-col max-w-lg mx-auto relative overflow-hidden">
       {/* Header */}
@@ -24,8 +26,8 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
         {children}
       </main>
 
-      {/* Bottom Tab Bar */}
-      <BottomTabBar />
+      {/* Bottom Tab Bar — only on main app pages */}
+      {showTabBar && <BottomTabBar />}
     </div>
   );
 }

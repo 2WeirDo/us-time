@@ -33,8 +33,8 @@ export default function ExplorePage() {
         ))}
       </div>
 
-      {/* Content with CSS animation for tab switch */}
-      <div key={activeTab} className="animate-slide-in-right">
+      {/* Content — fade-only animation (no transform: avoids breaking fixed-position drawers) */}
+      <div key={activeTab} className="animate-fade-in">
         {activeTab === 'bucket-list' && <BucketListView />}
         {activeTab === 'footprint' && <FootprintList />}
       </div>

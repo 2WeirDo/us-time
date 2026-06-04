@@ -180,7 +180,7 @@ function AppRoutes() {
         <Route
           path="/"
           element={
-            <AppLayout>
+            <AppLayout showTabBar>
               <HomePage />
             </AppLayout>
           }
@@ -188,7 +188,7 @@ function AppRoutes() {
         <Route
           path="/settings"
           element={
-            <AppLayout title="设置">
+            <AppLayout title="设置" showTabBar>
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center min-h-[60vh]">
@@ -204,7 +204,7 @@ function AppRoutes() {
         <Route
           path="/photos"
           element={
-            <AppLayout title="照片墙">
+            <AppLayout title="照片墙" showTabBar>
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center min-h-[60vh]">
@@ -220,7 +220,7 @@ function AppRoutes() {
         <Route
           path="/explore"
           element={
-            <AppLayout title="发现">
+            <AppLayout title="发现" showTabBar>
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center min-h-[60vh]">
@@ -236,7 +236,7 @@ function AppRoutes() {
         <Route
           path="/letters"
           element={
-            <AppLayout title="书信">
+            <AppLayout title="书信" showTabBar>
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center min-h-[60vh]">
@@ -252,7 +252,7 @@ function AppRoutes() {
         <Route
           path="/onthisday"
           element={
-            <AppLayout title="那年今日">
+            <AppLayout title="那年今日" showTabBar>
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center min-h-[60vh]">
@@ -268,7 +268,7 @@ function AppRoutes() {
         <Route
           path="*"
           element={
-            <AppLayout title="UsTime">
+            <AppLayout title="UsTime" showTabBar>
               <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
                 <span className="text-5xl mb-4">🔍</span>
                 <h2 className="font-display text-xl font-bold text-text-primary mb-2">
