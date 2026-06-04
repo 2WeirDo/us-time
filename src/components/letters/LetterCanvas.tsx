@@ -9,6 +9,7 @@ interface Stroke {
   points: { x: number; y: number }[];
   color: string;
   width: number;
+  isEraser?: boolean;
 }
 
 const COLORS = ['#FF69B4', '#FF1493', '#FFB6C1', '#FF0000', '#FF6347', '#FFA500', '#333333', '#000000'];
@@ -68,10 +69,15 @@ export default function LetterCanvas({ onCanvasReady }: LetterCanvasProps) {
       for (let i = 1; i < stroke.points.length; i++) {
         ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
       }
+      ctx.globalCompositeOperation = stroke.isEraser
+        ? 'destination-out'
+        : 'source-over';
       ctx.strokeStyle = stroke.color;
       ctx.lineWidth = stroke.width;
       ctx.stroke();
     }
+    // Reset composite operation after drawing
+    ctx.globalCompositeOperation = 'source-over';
   }, []);
 
   // Expose getDataUrl to parent
@@ -109,6 +115,7 @@ export default function LetterCanvas({ onCanvasReady }: LetterCanvasProps) {
         points: [pos],
         color: strokeColor,
         width: strokeWidth,
+        isEraser,
       };
       setIsDrawing(true);
     },
@@ -133,6 +140,9 @@ export default function LetterCanvas({ onCanvasReady }: LetterCanvasProps) {
       ctx.beginPath();
       ctx.moveTo(points[points.length - 2].x, points[points.length - 2].y);
       ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+      ctx.globalCompositeOperation = currentStrokeRef.current.isEraser
+        ? 'destination-out'
+        : 'source-over';
       ctx.strokeStyle = currentStrokeRef.current.color;
       ctx.lineWidth = currentStrokeRef.current.width;
       ctx.stroke();
@@ -224,12 +234,12 @@ export default function LetterCanvas({ onCanvasReady }: LetterCanvasProps) {
       {/* Canvas */}
       <div
         ref={containerRef}
-        className="relative w-full bg-white rounded-2xl border border-pink/10 overflow-hidden select-none"
+        className="relative w-full bg-white dark:bg-[#3D2B3E] rounded-2xl border border-pink/10 dark:border-white/[0.06] overflow-hidden select-none"
         style={{ height: '280px', touchAction: 'none' }}
       >
         {/* Placeholder text */}
         {strokesRef.current.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-text-muted/20 text-sm">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-text-muted/20 dark:text-white/[0.07] text-sm">
             在这里写下你想说的话...
           </div>
         )}

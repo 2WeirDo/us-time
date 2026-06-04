@@ -15,16 +15,19 @@ export default function LetterComposerDrawer({ open, onClose }: LetterComposerDr
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
+  const [hasContent, setHasContent] = useState(false);
   const getCanvasDataUrlRef = useRef<(() => string | null) | null>(null);
 
   const handleCanvasReady = useCallback((getDataUrl: () => string | null) => {
     getCanvasDataUrlRef.current = getDataUrl;
+    setHasContent(true);
   }, []);
 
   const handleOpen = () => {
     setTitle('');
     setMessage('');
     setSaving(false);
+    setHasContent(false);
     getCanvasDataUrlRef.current = null;
   };
 
@@ -50,8 +53,6 @@ export default function LetterComposerDrawer({ open, onClose }: LetterComposerDr
     setSaving(false);
     onClose();
   };
-
-  const hasContent = getCanvasDataUrlRef.current !== null;
 
   return (
     <AnimatePresence onExitComplete={() => {}}>
