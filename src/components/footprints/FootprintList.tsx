@@ -80,7 +80,7 @@ export default function FootprintList() {
       <div className="mb-4">
         <Suspense
           fallback={
-            <div className="w-full h-[220px] rounded-2xl bg-warm-cream flex items-center justify-center">
+            <div className="w-full h-[420px] rounded-2xl bg-warm-cream flex items-center justify-center">
               <Loader2 size={24} className="text-pink/40 animate-spin" />
             </div>
           }

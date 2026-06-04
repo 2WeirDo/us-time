@@ -305,6 +305,105 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* ---- Marker cluster — pink theme ---- */
+
+  .marker-cluster-small {
+    background-color: rgba(255, 105, 180, 0.15) !important;
+  }
+  .marker-cluster-small div {
+    background-color: rgba(255, 105, 180, 0.55) !important;
+  }
+  .marker-cluster-medium {
+    background-color: rgba(255, 105, 180, 0.2) !important;
+  }
+  .marker-cluster-medium div {
+    background-color: rgba(255, 105, 180, 0.65) !important;
+  }
+  .marker-cluster-large {
+    background-color: rgba(255, 105, 180, 0.25) !important;
+  }
+  .marker-cluster-large div {
+    background-color: rgba(255, 105, 180, 0.72) !important;
+  }
+  .marker-cluster {
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-family: 'Inter', 'PingFang SC', sans-serif !important;
+  }
+  .marker-cluster span {
+    color: #fff !important;
+  }
+
+  /* ---- Leaflet popups — clean rounded style ---- */
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+  .leaflet-popup-content {
+    margin: 0 !important;
+    min-width: 200px;
+  }
+  .leaflet-popup-close-button {
+    top: 8px !important;
+    right: 8px !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 20px !important;
+    font-weight: 300 !important;
+    color: #999 !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    backdrop-filter: blur(4px);
+    z-index: 1 !important;
+  }
+  .leaflet-popup-close-button:hover {
+    background: rgba(255, 105, 180, 0.12) !important;
+    color: #FF69B4 !important;
+  }
+
+  /* Dark mode popups */
+  body.dark .leaflet-popup-content-wrapper {
+    background: #3D2B3E !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  }
+  body.dark .leaflet-popup-tip {
+    background: #3D2B3E !important;
+  }
+  body.dark .leaflet-popup-close-button {
+    color: #C495A8 !important;
+    background: rgba(61, 43, 62, 0.85) !important;
+  }
+  body.dark .leaflet-popup-close-button:hover {
+    background: rgba(255, 105, 180, 0.15) !important;
+    color: #FF69B4 !important;
+  }
+
+  /* Dark mode cluster */
+  body.dark .marker-cluster-small {
+    background-color: rgba(255, 105, 180, 0.2) !important;
+  }
+  body.dark .marker-cluster-small div {
+    background-color: rgba(255, 105, 180, 0.6) !important;
+  }
+  body.dark .marker-cluster-medium {
+    background-color: rgba(255, 105, 180, 0.25) !important;
+  }
+  body.dark .marker-cluster-medium div {
+    background-color: rgba(255, 105, 180, 0.68) !important;
+  }
+  body.dark .marker-cluster-large {
+    background-color: rgba(255, 105, 180, 0.3) !important;
+  }
+  body.dark .marker-cluster-large div {
+    background-color: rgba(255, 105, 180, 0.76) !important;
+  }
+
   /* ---- Replacement for simple framer-motion fade-in animations ---- */
 
   @keyframes fade-in {
