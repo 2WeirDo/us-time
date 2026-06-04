@@ -29,28 +29,29 @@ export default function LetterDrawer({ letter, onClose }: LetterDrawerProps) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/40 z-[1001]"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1001]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
           />
 
-          {/* Drawer */}
+          {/* Centered modal */}
           <motion.div
-            className="fixed inset-x-0 bottom-0 z-[1001] bg-white rounded-t-[28px] shadow-lift max-w-lg mx-auto overflow-hidden"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed inset-0 z-[1001] flex items-center justify-center p-4 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-pink/15" />
-            </div>
-
+            <motion.div
+              className="w-full max-w-lg bg-white dark:bg-[#3D2B3E] rounded-[28px] shadow-lift overflow-hidden pointer-events-auto"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3">
+            <div className="flex items-center justify-between px-5 py-4">
               <div className="flex items-center gap-2">
                 <MailOpen size={16} className="text-pink" />
                 <span className="text-xs text-pink/80 font-medium">
@@ -59,14 +60,14 @@ export default function LetterDrawer({ letter, onClose }: LetterDrawerProps) {
               </div>
               <button
                 onClick={handleClose}
-                className="w-8 h-8 rounded-full bg-warm-cream flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-warm-cream dark:bg-white/[0.06] flex items-center justify-center"
               >
                 <X size={16} className="text-text-muted" />
               </button>
             </div>
 
             {/* Content */}
-            <div className="px-5 pb-8 max-h-[75vh] overflow-y-auto">
+            <div className="px-5 pb-6 max-h-[70vh] overflow-y-auto">
               {/* Date */}
               <div className="flex items-center gap-1 text-xs text-text-muted/40 mb-4">
                 <Clock size={11} />
@@ -91,7 +92,7 @@ export default function LetterDrawer({ letter, onClose }: LetterDrawerProps) {
               {/* Handwritten image */}
               {letter.imageUrl && (
                 <motion.div
-                  className="rounded-2xl overflow-hidden mb-4 border border-pink/10 bg-white"
+                  className="rounded-2xl overflow-hidden mb-4 border border-pink/10 dark:border-white/[0.06] bg-white dark:bg-[#3D2B3E]"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 }}
@@ -122,6 +123,7 @@ export default function LetterDrawer({ letter, onClose }: LetterDrawerProps) {
                 </p>
               )}
             </div>
+            </motion.div>
           </motion.div>
         </>
       )}
