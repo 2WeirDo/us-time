@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, Trash2 } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import type { PostComment } from '../../types';
@@ -36,6 +36,14 @@ export default function CommentSection({ postId }: CommentSectionProps) {
 
   const comments = getCommentsForPost(postId);
   const commentCount = comments.length;
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when comments change or expanded opens
+  useEffect(() => {
+    if (expanded && listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [comments, expanded]);
 
   const handleSubmit = async () => {
     if (!input.trim()) return;
@@ -89,7 +97,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         <div className="mt-2 pl-1 border-l-2 border-pink/10 ml-1">
           {/* Comment list */}
           {comments.length > 0 && (
-            <div className="space-y-2 mb-2 max-h-48 overflow-y-auto">
+            <div ref={listRef} className="space-y-2 mb-2 max-h-48 overflow-y-auto">
               {comments.map((c) => (
                 <CommentBubble
                   key={c.id}

@@ -47,7 +47,13 @@ export function useComments({ unlocked, identity, toast }: UseCommentsDeps) {
         author: identity,
         content: content.trim(),
       });
-      if (!result) {
+      if (result) {
+        // Optimistic: add to local state immediately
+        setComments((prev) => {
+          if (prev.some((c) => c.id === result.id)) return prev;
+          return [...prev, result];
+        });
+      } else {
         toast('评论失败，请重试', 'error');
       }
     },
