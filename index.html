@@ -63,5 +63,15 @@
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Skip Service Worker on iOS — iOS Safari has severe SW bugs that can block page loading
+      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if ('serviceWorker' in navigator && !isIOS) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/us-time/sw.js', { scope: '/us-time/' });
+        });
+      }
+    </script>
   </body>
 </html>
