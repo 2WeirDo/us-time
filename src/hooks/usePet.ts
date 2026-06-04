@@ -3,15 +3,16 @@ import type { AppState, PetState } from '../types';
 import { savePetState as savePetStateDB } from '../lib/db';
 import {
   PET_FEED_HAPPINESS,
-  PET_INTERACT_HAPPINESS,
   PET_MAX_AUX_BONUS,
 } from '../lib/constants';
 import { getDayKey } from '../lib/utils';
 
 /** Feed cooldown: at most once per hour */
 const FEED_COOLDOWN_HOURS = 1;
-/** Daily limit for petting */
-const DAILY_INTERACT_LIMIT = 5;
+/** Max happiness from petting per day */
+const DAILY_PET_BONUS_MAX = 15;
+/** Happiness gained per pet */
+const PET_HAPPINESS_PER_INTERACT = 1;
 
 interface UsePetDeps {
   setState: React.Dispatch<React.SetStateAction<AppState>>;
@@ -106,26 +107,29 @@ export function usePet({ setState, toast }: UsePetDeps) {
       const pet = prev.petState;
       if (!pet) return prev;
 
-      // Check daily interact limit
-      if (getDailyCount(INTERACT_COUNT_KEY) >= DAILY_INTERACT_LIMIT) {
-        toast('今天的摸摸次数用完啦，明天再来吧～ ✨', 'info');
+      // Check daily petting bonus cap (15% max per day)
+      const dailyPetCount = getDailyCount(INTERACT_COUNT_KEY);
+      if (dailyPetCount >= DAILY_PET_BONUS_MAX) {
+        toast('今天摸摸加成已达上限 (15%)，明天再继续宠爱TA吧～ ✨', 'info');
         return prev;
       }
 
-      // Check aux bonus cap
+      // Check aux bonus cap (overall happiness from feed+pet cannot exceed 30)
       if (pet.happiness >= PET_MAX_AUX_BONUS) {
         toast('摸摸加成已达上限，快和 TA 一起记录心情来提升吧 💕', 'info');
         return prev;
       }
 
       const now = new Date().toISOString();
+      const newHappiness = Math.min(PET_MAX_AUX_BONUS, pet.happiness + PET_HAPPINESS_PER_INTERACT);
       const newPet: PetState = {
         ...pet,
-        happiness: Math.min(PET_MAX_AUX_BONUS, pet.happiness + PET_INTERACT_HAPPINESS),
+        happiness: newHappiness,
         lastInteractionAt: now,
       };
       incrementDailyCount(INTERACT_COUNT_KEY);
-      toast(`摸摸成功！+${PET_INTERACT_HAPPINESS} ❤️`, 'success');
+      const todayTotal = dailyPetCount + 1;
+      toast(`摸摸成功！+${PET_HAPPINESS_PER_INTERACT} ❤️ (今日已获得 ${todayTotal}/${DAILY_PET_BONUS_MAX}%)`, 'success');
       savePetStateDB(newPet).catch((e) => console.error('interactWithPet error:', e));
       return { ...prev, petState: newPet };
     });
