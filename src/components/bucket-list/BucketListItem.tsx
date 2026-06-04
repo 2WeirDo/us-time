@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Check, Trash2 } from 'lucide-react';
 import type { BucketListItem as BucketListItemType } from '../../types';
 
@@ -11,14 +10,11 @@ interface BucketListItemProps {
 
 export default function BucketListItem({ item, onToggle, onDelete, index }: BucketListItemProps) {
   return (
-    <motion.div
-      className={`card flex items-center gap-3 group transition-all ${
+    <div
+      className={`card flex items-center gap-3 group transition-all animate-slide-up ${
         item.completed ? 'opacity-50 border-pink/5' : 'border-pink/08'
       }`}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.25 }}
-      layout
+      style={{ animationDelay: `${index * 0.04}s` }}
     >
       {/* Checkbox */}
       <button
@@ -68,6 +64,6 @@ export default function BucketListItem({ item, onToggle, onDelete, index }: Buck
       >
         <Trash2 size={14} />
       </button>
-    </motion.div>
+    </div>
   );
 }

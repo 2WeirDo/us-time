@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Plus, Inbox } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import LetterCard from './LetterCard';
@@ -18,11 +17,7 @@ export default function LetterInbox() {
   if (letters.length === 0) {
     return (
       <>
-        <motion.div
-          className="flex flex-col items-center justify-center py-16 text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
+        <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
           <div className="w-20 h-20 rounded-full bg-warm-cream flex items-center justify-center mb-4">
             <Inbox size={32} className="text-text-muted/30" />
           </div>
@@ -39,7 +34,7 @@ export default function LetterInbox() {
             <Plus size={16} />
             写一封信
           </button>
-        </motion.div>
+        </div>
 
         <LetterComposerDrawer
           open={composeOpen}
@@ -53,16 +48,12 @@ export default function LetterInbox() {
     <div>
       {/* Unread count badge */}
       {unreadCount > 0 && (
-        <motion.div
-          className="flex items-center gap-2 mb-4 px-1"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
+        <div className="flex items-center gap-2 mb-4 px-1 animate-fade-in">
           <span className="w-2 h-2 rounded-full bg-pink" />
           <span className="text-sm font-medium text-pink">
             {unreadCount} 封未读
           </span>
-        </motion.div>
+        </div>
       )}
 
       {/* Letters list */}

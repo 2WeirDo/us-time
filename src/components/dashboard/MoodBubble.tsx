@@ -2,18 +2,8 @@ import { motion } from 'framer-motion';
 import { Smile } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import { MOOD_OPTIONS } from '../../types';
+import { getDayKey } from '../../lib/utils';
 import { useState } from 'react';
-
-/** Day key that shifts at 6am — must match useAppState */
-function getDayKey(): string {
-  const now = new Date();
-  if (now.getHours() < 6) {
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    return yesterday.toISOString().split('T')[0];
-  }
-  return now.toISOString().split('T')[0];
-}
 
 export default function MoodBubble() {
   const { state, identity, setTodayMood } = useSharedAppState();

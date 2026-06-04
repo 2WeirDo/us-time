@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Clock, Calendar } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import { useNextMilestone } from '../../hooks/useDaysCount';
@@ -11,12 +10,7 @@ export default function CountdownCard() {
   );
 
   return (
-    <motion.div
-      className="card flex flex-col justify-between min-h-[120px]"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-    >
+    <div className="card flex flex-col justify-between min-h-[120px] animate-slide-up stagger-2">
       <div className="flex items-center gap-2 text-text-muted">
         <Clock size={16} />
         <span className="text-xs font-medium">下一个纪念日</span>
@@ -31,15 +25,12 @@ export default function CountdownCard() {
             </span>
           </div>
           <div className="flex items-baseline gap-1 mt-2">
-            <motion.span
-              className="font-display text-2xl font-bold text-pink tabular-nums"
+            <span
+              className="font-display text-2xl font-bold text-pink tabular-nums animate-pop-in"
               key={nextMilestone.daysLeft}
-              initial={{ scale: 1.1 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring' }}
             >
               {nextMilestone.daysLeft}
-            </motion.span>
+            </span>
             <span className="text-xs text-text-muted">天</span>
           </div>
           <p className="text-text-muted/50 text-[10px] mt-1">
@@ -52,6 +43,6 @@ export default function CountdownCard() {
           <span className="text-xs mt-1">添加纪念日</span>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

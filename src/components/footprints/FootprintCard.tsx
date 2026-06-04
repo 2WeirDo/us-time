@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { MapPin, Calendar, Trash2, Navigation } from 'lucide-react';
 import type { Footprint } from '../../types';
 
@@ -24,12 +23,9 @@ export default function FootprintCard({
     : null;
 
   return (
-    <motion.div
-      className="card flex items-center gap-3 group"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.25 }}
-      layout
+    <div
+      className="card flex items-center gap-3 group animate-slide-up"
+      style={{ animationDelay: `${index * 0.05}s` }}
     >
       {/* Map pin icon */}
       <div className="w-9 h-9 rounded-xl bg-pink/10 flex items-center justify-center flex-shrink-0">
@@ -78,6 +74,6 @@ export default function FootprintCard({
           <Trash2 size={13} />
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }

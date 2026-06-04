@@ -64,6 +64,7 @@ export default function Fab({ onNewPost, onVoiceRecord }: FabProps) {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         animate={{ rotate: open ? 45 : 0 }}
+        aria-label={open ? '关闭菜单' : '新建内容'}
       >
         <Plus size={28} />
       </motion.button>

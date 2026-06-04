@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { Calendar, Clock, Sparkles, ImageOff } from 'lucide-react';
 import { useSharedAppState } from '../hooks/AppStateContext';
 import { getOnThisDayMemories } from '../components/timeline/OnThisDay';
@@ -22,28 +21,14 @@ export default function OnThisDayPage() {
     setLightboxOpen(true);
   };
 
-  const handleCloseLightbox = () => {
-    setLightboxOpen(false);
-  };
-
   if (memories.length === 0) {
     return (
-      <motion.div
-        className="pb-24"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="pb-24 animate-fade-in">
         <h2 className="font-display text-lg font-bold text-text-primary mb-4">
           📅 那年今日
         </h2>
 
-        <motion.div
-          className="flex flex-col items-center justify-center py-20 text-center"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <div className="flex flex-col items-center justify-center py-20 text-center animate-slide-up-delayed">
           <div className="w-24 h-24 rounded-full bg-warm-cream flex items-center justify-center mb-5">
             <Calendar size={40} className="text-text-muted/20" />
           </div>
@@ -56,18 +41,13 @@ export default function OnThisDayPage() {
           <p className="text-text-muted/40 text-xs mt-3">
             明年的今天，这里就会有属于你们的回忆
           </p>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      className="pb-24"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="pb-24 animate-fade-in">
       {/* Header */}
       <div className="mb-6">
         <h2 className="font-display text-lg font-bold text-text-primary mb-1">
@@ -97,12 +77,10 @@ export default function OnThisDayPage() {
       {/* Memory cards */}
       <div className="space-y-4">
         {memories.map(({ post, yearsAgo }, i) => (
-          <motion.div
+          <div
             key={post.id}
-            className="card border-pink/10 overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, duration: 0.3 }}
+            className="card border-pink/10 overflow-hidden animate-slide-up"
+            style={{ animationDelay: `${i * 0.06}s` }}
           >
             {/* Card header */}
             <div className="flex items-center justify-between mb-3">
@@ -185,7 +163,7 @@ export default function OnThisDayPage() {
                 })}
               </span>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -194,7 +172,7 @@ export default function OnThisDayPage() {
         <PhotoLightbox
           photos={lightboxPhotos}
           currentIndex={lightboxIndex}
-          onClose={handleCloseLightbox}
+          onClose={() => setLightboxOpen(false)}
           onPrev={() => setLightboxIndex((i) => Math.max(0, i - 1))}
           onNext={() =>
             setLightboxIndex((i) =>
@@ -203,6 +181,6 @@ export default function OnThisDayPage() {
           }
         />
       )}
-    </motion.div>
+    </div>
   );
 }

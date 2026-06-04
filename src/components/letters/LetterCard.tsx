@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Mail, MailOpen, Trash2, Clock } from 'lucide-react';
 import type { LoveLetter } from '../../types';
 
@@ -17,14 +16,10 @@ export default function LetterCard({ letter, onClick, onDelete, index }: LetterC
   });
 
   return (
-    <motion.button
+    <button
       onClick={onClick}
-      className="w-full card flex items-center gap-3 text-left group relative overflow-hidden"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
+      className="w-full card flex items-center gap-3 text-left group relative overflow-hidden animate-slide-up hover:scale-[1.01] active:scale-[0.98] transition-transform duration-200"
+      style={{ animationDelay: `${index * 0.05}s` }}
     >
       {/* Envelope icon */}
       <div
@@ -75,6 +70,6 @@ export default function LetterCard({ letter, onClick, onDelete, index }: LetterC
       >
         <Trash2 size={13} />
       </button>
-    </motion.button>
+    </button>
   );
 }

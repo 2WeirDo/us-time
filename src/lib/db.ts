@@ -553,3 +553,36 @@ function mapPetState(db: any): PetState {
     lastInteractionAt: db.last_interaction_at,
   };
 }
+
+/** Delete ALL data from every table — used by full app reset.
+ *  Returns the number of tables that failed (0 = all success). */
+export async function clearAllSupabaseData(): Promise<number> {
+  const sb = getSupabase();
+  if (!sb) return -1;
+
+  const tables = [
+    'posts',
+    'milestones',
+    'love_letters',
+    'bucket_list_items',
+    'footprints',
+    'pet_state',
+    'couple_settings',
+  ];
+
+  const results = await Promise.all(
+    tables.map(async (t) => {
+      try {
+        const { error } = await sb
+          .from(t)
+          .delete()
+          .neq('id', '__sentinel__'); // delete all rows without a filter error
+        return error ? 1 : 0;
+      } catch {
+        return 1;
+      }
+    })
+  );
+
+  return results.reduce((sum: number, v: number) => sum + v, 0);
+}

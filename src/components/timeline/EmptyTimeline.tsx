@@ -1,29 +1,16 @@
-import { motion } from 'framer-motion';
 import { Camera, Heart } from 'lucide-react';
 
 export default function EmptyTimeline() {
   return (
-    <motion.div
-      className="flex flex-col items-center justify-center py-16 px-4 text-center"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center animate-slide-up">
       {/* Decorative */}
       <div className="relative mb-6">
-        <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 3, repeat: Infinity }}
-          className="w-20 h-20 rounded-full bg-pink/5 flex items-center justify-center"
-        >
+        <div className="w-20 h-20 rounded-full bg-pink/5 flex items-center justify-center animate-[pulse-soft_3s_ease-in-out_infinite]">
           <Camera size={32} className="text-pink/30" />
-        </motion.div>
-        <motion.div
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-          className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-pink/10 flex items-center justify-center"
-        >
+        </div>
+        <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-pink/10 flex items-center justify-center animate-[pulse-soft_2s_ease-in-out_0.5s_infinite]">
           <Heart size={14} className="text-pink/40" fill="currentColor" />
-        </motion.div>
+        </div>
       </div>
 
       <h3 className="font-display text-lg font-semibold text-text-primary mb-2">
@@ -34,11 +21,7 @@ export default function EmptyTimeline() {
       </p>
 
       {/* Arrow pointing down-right */}
-      <motion.div
-        className="mt-6 text-text-muted/30"
-        animate={{ y: [0, 8, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
+      <div className="mt-6 text-text-muted/30 animate-[bounce-gentle_2s_ease-in-out_infinite]">
         <svg width="40" height="40" viewBox="0 0 40 40">
           <path
             d="M10 10 L30 30 M30 30 L30 15 M30 30 L15 30"
@@ -49,7 +32,7 @@ export default function EmptyTimeline() {
             fill="none"
           />
         </svg>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

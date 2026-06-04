@@ -304,4 +304,77 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  /* ---- Replacement for simple framer-motion fade-in animations ---- */
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slide-up-delayed {
+    0% { opacity: 0; transform: translateY(12px); }
+    40% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slide-in-left {
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes pop-in {
+    0% { opacity: 0; transform: scale(0.92); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out both;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.4s ease-out both;
+  }
+
+  .animate-slide-up-delayed {
+    animation: slide-up-delayed 0.55s ease-out both;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out both;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out both;
+  }
+
+  .animate-pop-in {
+    animation: pop-in 0.35s ease-out both;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.25s ease-out both;
+  }
+
+  /* Stagger children — add delay classes */
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
 }

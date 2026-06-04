@@ -10,3 +10,15 @@ export function generateId(): string {
     return v.toString(16);
   });
 }
+
+/** Day key that shifts at 6am instead of midnight.
+ *  Used for per-day mood tracking so late-night entries count for the same day. */
+export function getDayKey(): string {
+  const now = new Date();
+  if (now.getHours() < 6) {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  }
+  return now.toISOString().split('T')[0];
+}

@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import { useDaysCount } from '../../hooks/useDaysCount';
@@ -10,12 +9,7 @@ export default function DaysCounter() {
   if (!state.coupleInfo) return null;
 
   return (
-    <motion.div
-      className="card bg-gradient-to-br from-pink to-pink-dark text-white overflow-hidden relative !border-0"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.1 }}
-    >
+    <div className="card bg-gradient-to-br from-pink to-pink-dark text-white overflow-hidden relative !border-0 animate-slide-up stagger-1">
       {/* Decorative hearts in background */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <Heart
@@ -42,21 +36,18 @@ export default function DaysCounter() {
         </p>
         <div className="flex items-baseline gap-1 mt-2">
           <span className="text-white/60 text-sm">在一起第</span>
-          <motion.span
-            className="font-display text-4xl font-bold tabular-nums"
+          <span
+            className="font-display text-4xl font-bold tabular-nums animate-pop-in"
             key={days}
-            initial={{ scale: 1.2, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
             {days.toLocaleString()}
-          </motion.span>
+          </span>
           <span className="text-white/60 text-sm">天</span>
         </div>
         <p className="text-white/50 text-xs mt-2">
           从 {state.coupleInfo.startDate} 开始 ❤️
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }

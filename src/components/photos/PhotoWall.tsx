@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { Image } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import PhotoItem from './PhotoItem';
@@ -31,17 +30,13 @@ export default function PhotoWall() {
 
   if (photoEntries.length === 0) {
     return (
-      <motion.div
-        className="flex flex-col items-center justify-center py-16 text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
+      <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
         <div className="w-20 h-20 rounded-full bg-warm-cream flex items-center justify-center mb-4">
           <Image size={32} className="text-text-muted/30" />
         </div>
         <p className="text-text-muted text-sm">还没有照片</p>
         <p className="text-text-muted/50 text-xs mt-1">发一条带照片的记录吧 📸</p>
-      </motion.div>
+      </div>
     );
   }
 

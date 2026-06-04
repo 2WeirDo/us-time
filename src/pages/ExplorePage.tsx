@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ListTodo, MapPin } from 'lucide-react';
 import BucketListView from '../components/bucket-list/BucketListView';
 import FootprintList from '../components/footprints/FootprintList';
@@ -15,12 +14,7 @@ export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState<ExploreTab>('bucket-list');
 
   return (
-    <motion.div
-      className="pb-24"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="pb-24 animate-fade-in">
       <h2 className="font-display text-lg font-bold text-text-primary mb-4">
         🗺️ 发现
       </h2>
@@ -43,19 +37,11 @@ export default function ExplorePage() {
         ))}
       </div>
 
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -10 }}
-          transition={{ duration: 0.2 }}
-        >
-          {activeTab === 'bucket-list' && <BucketListView />}
-          {activeTab === 'footprint' && <FootprintList />}
-        </motion.div>
-      </AnimatePresence>
-    </motion.div>
+      {/* Content with CSS animation for tab switch */}
+      <div key={activeTab} className="animate-slide-in-right">
+        {activeTab === 'bucket-list' && <BucketListView />}
+        {activeTab === 'footprint' && <FootprintList />}
+      </div>
+    </div>
   );
 }

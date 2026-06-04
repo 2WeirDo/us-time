@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import type { Post } from '../../types';
 
 interface PhotoItemProps {
@@ -10,17 +9,14 @@ interface PhotoItemProps {
 
 export default function PhotoItem({ photoUrl, post, index, onClick }: PhotoItemProps) {
   const handleClick = () => {
-    // Find this photo's index within the post's photos array
     const photoIndex = post.photos.indexOf(photoUrl);
     onClick(post.photos, photoIndex >= 0 ? photoIndex : 0);
   };
 
   return (
-    <motion.div
-      className="break-inside-avoid mb-3 cursor-pointer group relative"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
+    <div
+      className="break-inside-avoid mb-3 cursor-pointer group relative animate-slide-up"
+      style={{ animationDelay: `${index * 0.05}s` }}
       onClick={handleClick}
     >
       <div className="relative overflow-hidden rounded-2xl">
@@ -51,6 +47,6 @@ export default function PhotoItem({ photoUrl, post, index, onClick }: PhotoItemP
           {post.mood}
         </span>
       )}
-    </motion.div>
+    </div>
   );
 }

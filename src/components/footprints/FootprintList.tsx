@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, MapPin } from 'lucide-react';
+import { Plus, MapPin, Loader2 } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
-import FootprintMap from './FootprintMap';
 import FootprintCard from './FootprintCard';
 import FootprintAddDrawer from './FootprintAddDrawer';
+
+// Lazy-load the map (Leaflet is ~80KB — only load when footprint tab is active)
+const FootprintMap = lazy(() => import('./FootprintMap'));
 
 export default function FootprintList() {
   const { state, deleteFootprint } = useSharedAppState();
@@ -74,14 +76,22 @@ export default function FootprintList() {
 
   return (
     <div>
-      {/* Map */}
+      {/* Map — lazy loaded (Leaflet is heavy) */}
       <div className="mb-4">
-        <FootprintMap
-          footprints={footprints}
-          focusLat={focusLat}
-          focusLng={focusLng}
-          onMapClick={handleMapClick}
-        />
+        <Suspense
+          fallback={
+            <div className="w-full h-[220px] rounded-2xl bg-warm-cream flex items-center justify-center">
+              <Loader2 size={24} className="text-pink/40 animate-spin" />
+            </div>
+          }
+        >
+          <FootprintMap
+            footprints={footprints}
+            focusLat={focusLat}
+            focusLng={focusLng}
+            onMapClick={handleMapClick}
+          />
+        </Suspense>
         <p className="text-[10px] text-text-muted/30 text-center mt-1.5">
           点击地图标记足迹
         </p>
