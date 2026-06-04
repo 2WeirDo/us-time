@@ -4,18 +4,7 @@ import { Heart, Utensils, Sparkles } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import { PET_TYPES } from '../../types';
 import type { PetType, PetState } from '../../types';
-
-/**
- * Calculate happiness decay: -1 per hour since last interaction, capped.
- * This is purely visual/client-side; actual DB writes happen on interaction.
- */
-function getDecayedHappiness(pet: PetState): number {
-  const now = Date.now();
-  const lastInteract = new Date(pet.lastInteractionAt).getTime();
-  const hoursSince = Math.max(0, (now - lastInteract) / (1000 * 60 * 60));
-  const decay = Math.floor(hoursSince * 1.5);
-  return Math.max(0, pet.happiness - decay);
-}
+import { calculateEffectiveHappiness, getAdoptionHappiness } from '../../lib/pet';
 
 function getHappinessEmoji(happiness: number): string {
   if (happiness >= 80) return '😄';
@@ -48,7 +37,7 @@ export default function PetCard() {
   const [petting, setPetting] = useState(false);
 
   const pet = state.petState;
-  const happiness = pet ? getDecayedHappiness(pet) : 0;
+  const happiness = pet ? calculateEffectiveHappiness(pet, state.todayMoods) : 0;
   const petTypeInfo = pet ? PET_TYPES.find((t) => t.key === pet.petType) : null;
 
   const handleFeed = async () => {
@@ -65,7 +54,7 @@ export default function PetCard() {
     const newPet: PetState = {
       petType: adoptType,
       name: adoptName.trim() || '小可爱',
-      happiness: 80,
+      happiness: getAdoptionHappiness(state.todayMoods),
       lastFedAt: new Date().toISOString(),
       lastInteractionAt: new Date().toISOString(),
     };

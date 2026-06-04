@@ -3,6 +3,7 @@ import { Send, Crosshair, Camera, X } from 'lucide-react';
 import { useSharedAppState } from '../../hooks/AppStateContext';
 import { uploadPhoto } from '../../lib/storage';
 import BottomDrawer from '../ui/BottomDrawer';
+import DatePicker from '../ui/DatePicker';
 
 interface FootprintAddDrawerProps {
   open: boolean;
@@ -163,13 +164,11 @@ export default function FootprintAddDrawer({
 
       {/* Date */}
       <div>
-        <label className="text-xs font-medium text-text-muted mb-2 block">日期（可选）</label>
-        <input
-          type="date"
+        <DatePicker
           value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="input-field"
+          onChange={setDate}
           max={new Date().toISOString().split('T')[0]}
+          label="日期（可选）"
         />
       </div>
 

@@ -127,7 +127,7 @@ export function useAppState() {
   const letters = useLetters({ setState, unlocked, toast, loadData });
   const bucketList = useBucketList({ setState, identity, unlocked, toast, loadData });
   const footprints = useFootprints({ setState, unlocked, toast, loadData });
-  const pet = usePet({ setState });
+  const pet = usePet({ setState, toast });
   const moodTheme = useMoodTheme({ setState });
   const dataMgmt = useDataManagement({ state, setState, toast, lock: auth.lock });
 

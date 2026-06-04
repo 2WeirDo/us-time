@@ -15,10 +15,6 @@ export default function ExplorePage() {
 
   return (
     <div className="pb-24 animate-fade-in">
-      <h2 className="font-display text-lg font-bold text-text-primary mb-4">
-        🗺️ 发现
-      </h2>
-
       {/* Tab switcher */}
       <div className="flex bg-warm-cream rounded-2xl p-1 mb-5">
         {TABS.map(({ key, label, icon: Icon }) => (

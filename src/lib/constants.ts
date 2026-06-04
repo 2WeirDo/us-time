@@ -12,14 +12,28 @@ export const LONG_PRESS_THRESHOLD_MS = 500;
 /** Pet happiness decay per hour when unattended */
 export const PET_HAPPINESS_DECAY_PER_HOUR = 1.5;
 
-/** Pet happiness gained from feeding */
-export const PET_FEED_HAPPINESS = 15;
+/** Pet happiness gained from feeding (auxiliary — moods are primary) */
+export const PET_FEED_HAPPINESS = 5;
 
-/** Pet happiness gained from interaction */
-export const PET_INTERACT_HAPPINESS = 5;
+/** Pet happiness gained from interaction (auxiliary — moods are primary) */
+export const PET_INTERACT_HAPPINESS = 3;
 
 /** Max pet happiness value */
 export const PET_MAX_HAPPINESS = 100;
+
+/** Cap on feed/interact contribution to happiness (moods are the primary driver) */
+export const PET_MAX_AUX_BONUS = 30;
+
+/** Mood emoji → happiness score mapping for pet mood calculation */
+export const MOOD_HAPPINESS_MAP: Record<string, number> = {
+  '😊': 80,
+  '🥰': 95,
+  '😌': 60,
+  '😢': 20,
+  '😤': 15,
+  '😴': 25,
+  '🤩': 90,
+};
 
 /** Photo compression: max width in pixels */
 export const PHOTO_MAX_WIDTH_PX = 1200;
