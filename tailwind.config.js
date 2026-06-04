@@ -37,8 +37,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Quicksand', 'Comic Sans MS', 'sans-serif'],
-        body: ['Inter', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
+        display: ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Comic Sans MS', 'sans-serif'],
+        body: ['-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'sans-serif'],
       },
       borderRadius: {
         '2xl': '18px',
