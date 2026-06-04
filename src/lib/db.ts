@@ -646,6 +646,108 @@ function mapComment(db: any): PostComment {
   };
 }
 
+// ====== Today Moods ======
+
+import type { TodayMood } from '../types';
+
+export async function fetchTodayMoods(): Promise<TodayMood[]> {
+  const sb = getSupabase();
+  if (!sb) return [];
+
+  const { data, error } = await sb
+    .from('today_moods')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('fetchTodayMoods error:', error);
+    return [];
+  }
+
+  return (data || []).map(mapTodayMood);
+}
+
+export async function saveTodayMood(
+  mood: TodayMood
+): Promise<TodayMood | null> {
+  const sb = getSupabase();
+  if (!sb) return null;
+
+  const { data, error } = await sb
+    .from('today_moods')
+    .upsert(
+      { date: mood.date, author: mood.author, mood: mood.mood },
+      { onConflict: 'date,author' }
+    )
+    .select()
+    .single();
+
+  if (error) {
+    console.error('saveTodayMood error:', error);
+    return null;
+  }
+
+  return mapTodayMood(data);
+}
+
+export async function deleteTodayMood(
+  date: string,
+  author: 'me' | 'partner'
+): Promise<boolean> {
+  const sb = getSupabase();
+  if (!sb) return false;
+  const { error } = await sb
+    .from('today_moods')
+    .delete()
+    .eq('date', date)
+    .eq('author', author);
+  return !error;
+}
+
+export function subscribeToMoods(
+  onInsert: (mood: TodayMood) => void,
+  onUpdate: (mood: TodayMood) => void,
+  onDelete: (mood: { date: string; author: string }) => void
+): () => void {
+  const sb = getSupabase();
+  if (!sb) return () => {};
+
+  const channel = sb
+    .channel('moods-changes')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'today_moods' },
+      (payload) => onInsert(mapTodayMood(payload.new as any))
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'today_moods' },
+      (payload) => onUpdate(mapTodayMood(payload.new as any))
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'today_moods' },
+      (payload) =>
+        onDelete({
+          date: (payload.old as any).date,
+          author: (payload.old as any).author,
+        })
+    )
+    .subscribe();
+
+  return () => {
+    channel.unsubscribe();
+  };
+}
+
+function mapTodayMood(db: any): TodayMood {
+  return {
+    date: db.date,
+    author: db.author,
+    mood: db.mood,
+  };
+}
+
 /** Delete ALL data from every table — used by full app reset.
  *  Returns the number of tables that failed (0 = all success). */
 export async function clearAllSupabaseData(): Promise<number> {
@@ -661,6 +763,7 @@ export async function clearAllSupabaseData(): Promise<number> {
     'pet_state',
     'couple_settings',
     'comments',
+    'today_moods',
   ];
 
   const results = await Promise.all(

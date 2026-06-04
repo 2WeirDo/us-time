@@ -350,7 +350,7 @@ export default function VoiceRecordDrawer({ open, onClose }: VoiceRecordDrawerPr
             </div>
 
             {/* Submit */}
-            <div className="px-5 pb-8 pt-2">
+            <div className="px-5 pb-24 pt-2">
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit}

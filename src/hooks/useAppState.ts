@@ -20,6 +20,7 @@ import {
   fetchBucketItems,
   fetchFootprints,
   fetchPetState,
+  fetchTodayMoods,
 } from '../lib/db';
 import { ensurePhotosBucket } from '../lib/storage';
 import { getDayKey } from '../lib/utils';
@@ -80,7 +81,7 @@ export function useAppState() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [settings, posts, milestones, letters, bucketItems, footprints, pet] =
+      const [settings, posts, milestones, letters, bucketItems, footprints, pet, dbMoods] =
         await Promise.all([
           fetchCoupleSettings(),
           fetchPosts(),
@@ -89,11 +90,22 @@ export function useAppState() {
           fetchBucketItems(),
           fetchFootprints(),
           fetchPetState(),
+          fetchTodayMoods(),
         ]);
       ensurePhotosBucket().catch(() => {});
 
       if (settings?.passcode) {
         localStorage.setItem(LOCAL_KEYS.passcode, settings.passcode);
+      }
+
+      // Merge moods: Supabase is authoritative, fall back to localStorage cache
+      const today = getDayKey();
+      const localMoods = loadPersistedMoods();
+      const mergedMoods = dbMoods.length > 0
+        ? dbMoods.filter((m) => m.date === today)
+        : localMoods;
+      if (mergedMoods.length > 0) {
+        localStorage.setItem(LOCAL_KEYS.moods, JSON.stringify(mergedMoods));
       }
 
       setState((prev) => ({
@@ -108,6 +120,7 @@ export function useAppState() {
         setupComplete: !!settings || prev.setupComplete,
         theme:
           (localStorage.getItem(LOCAL_KEYS.theme) as AppState['theme']) || 'dark',
+        todayMoods: mergedMoods,
       }));
     } catch (e) {
       console.error('loadData error:', e);
@@ -129,7 +142,7 @@ export function useAppState() {
   const bucketList = useBucketList({ setState, identity, unlocked, toast, loadData });
   const footprints = useFootprints({ setState, unlocked, toast, loadData });
   const pet = usePet({ setState, toast });
-  const moodTheme = useMoodTheme({ setState });
+  const moodTheme = useMoodTheme({ setState, unlocked });
   const commentModule = useComments({ unlocked, identity, toast });
   const dataMgmt = useDataManagement({ state, setState, toast, lock: auth.lock });
 

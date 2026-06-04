@@ -7,11 +7,13 @@ import BottomDrawer from '../ui/BottomDrawer';
 interface BucketListAddDrawerProps {
   open: boolean;
   onClose: () => void;
+  /** Custom categories extracted from existing items */
+  customCategories?: { key: string; label: string; emoji: string }[];
 }
 
 const DEFAULT_EMOJIS = ['✨', '💕', '🎯', '🌟', '🎨', '🎵', '📸', '🌍', '🍜', '🏃', '💪', '🎮'];
 
-export default function BucketListAddDrawer({ open, onClose }: BucketListAddDrawerProps) {
+export default function BucketListAddDrawer({ open, onClose, customCategories = [] }: BucketListAddDrawerProps) {
   const { identity, addBucketItem } = useSharedAppState();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('other');
@@ -105,6 +107,21 @@ export default function BucketListAddDrawer({ open, onClose }: BucketListAddDraw
               key={key}
               onClick={() => { setCategory(key); setShowCustomCategory(false); }}
               className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 justify-center ${
+                !showCustomCategory && category === key
+                  ? 'bg-pink/15 text-pink ring-1 ring-pink/30'
+                  : 'bg-warm-cream text-text-muted hover:bg-pink/5'
+              }`}
+            >
+              <span>{catEmoji}</span>
+              <span>{label}</span>
+            </button>
+          ))}
+          {/* Custom categories from previously created items */}
+          {customCategories.map(({ key, label, emoji: catEmoji }) => (
+            <button
+              key={key}
+              onClick={() => { setCategory(key); setShowCustomCategory(false); }}
+              className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 justify-center truncate ${
                 !showCustomCategory && category === key
                   ? 'bg-pink/15 text-pink ring-1 ring-pink/30'
                   : 'bg-warm-cream text-text-muted hover:bg-pink/5'

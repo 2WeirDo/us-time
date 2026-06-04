@@ -135,7 +135,7 @@ export default function LetterComposerDrawer({ open, onClose }: LetterComposerDr
             </div>
 
             {/* Submit button */}
-            <div className="px-5 pb-8 pt-2">
+            <div className="px-5 pb-24 pt-2">
               <button
                 onClick={handleSubmit}
                 disabled={!hasContent || saving}

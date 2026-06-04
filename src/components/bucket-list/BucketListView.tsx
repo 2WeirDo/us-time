@@ -70,6 +70,7 @@ export default function BucketListView() {
         <BucketListAddDrawer
           open={addDrawerOpen}
           onClose={() => setAddDrawerOpen(false)}
+          customCategories={allCategories.filter((c) => !BUCKET_CATEGORIES.some((p) => p.key === c.key))}
         />
       </>
     );
@@ -161,6 +162,7 @@ export default function BucketListView() {
       <BucketListAddDrawer
         open={addDrawerOpen}
         onClose={() => setAddDrawerOpen(false)}
+        customCategories={allCategories.filter((c) => !BUCKET_CATEGORIES.some((p) => p.key === c.key))}
       />
     </div>
   );
