@@ -15,29 +15,32 @@ export default function LetterComposerDrawer({ open, onClose }: LetterComposerDr
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
-  const [hasContent, setHasContent] = useState(false);
   const getCanvasDataUrlRef = useRef<(() => string | null) | null>(null);
 
   const handleCanvasReady = useCallback((getDataUrl: () => string | null) => {
     getCanvasDataUrlRef.current = getDataUrl;
-    setHasContent(true);
   }, []);
 
   const handleOpen = () => {
     setTitle('');
     setMessage('');
     setSaving(false);
-    setHasContent(false);
     getCanvasDataUrlRef.current = null;
   };
 
   const handleSubmit = async () => {
     if (!identity) return;
+
+    const dataUrl = getCanvasDataUrlRef.current?.();
+    const hasText = title.trim() || message.trim();
+
+    // Require at least the canvas drawing or some text
+    if (!dataUrl && !hasText) return;
+
     setSaving(true);
 
     // Get canvas image
     let imageUrl: string | undefined;
-    const dataUrl = getCanvasDataUrlRef.current?.();
     if (dataUrl) {
       const uploaded = await uploadPhoto(dataUrl, `letter-${Date.now()}.png`);
       imageUrl = uploaded || dataUrl; // fallback to base64
@@ -139,9 +142,9 @@ export default function LetterComposerDrawer({ open, onClose }: LetterComposerDr
             <div className="px-5 pb-24 pt-2">
               <button
                 onClick={handleSubmit}
-                disabled={!hasContent || saving}
+                disabled={saving}
                 className={`w-full py-3.5 rounded-[20px] font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
-                  hasContent && !saving
+                  !saving
                     ? 'btn-primary'
                     : 'bg-pink/10 text-pink/40 cursor-not-allowed'
                 }`}
