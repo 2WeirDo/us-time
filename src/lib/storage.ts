@@ -76,9 +76,16 @@ export async function deletePhoto(url: string): Promise<boolean> {
   if (!sb) return false;
 
   // Extract filename from URL
-  const urlObj = new URL(url);
-  const pathParts = urlObj.pathname.split('/');
-  const filename = pathParts[pathParts.length - 1];
+  let filename: string | undefined;
+  try {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/');
+    filename = pathParts[pathParts.length - 1];
+  } catch {
+    // Invalid URL — extract filename manually
+    const parts = url.split('/');
+    filename = parts[parts.length - 1]?.split('?')[0];
+  }
   if (!filename) return false;
 
   const { error } = await sb.storage

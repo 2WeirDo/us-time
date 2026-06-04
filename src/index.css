@@ -9,11 +9,22 @@
     box-sizing: border-box;
   }
 
+  /* Enable momentum scrolling on iOS for all scrollable containers */
+  [style*="overflow-y: auto"],
+  [style*="overflow-y:auto"],
+  .overflow-y-auto,
+  .overflow-y-scroll,
+  .overflow-auto,
+  .overflow-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
   html {
     font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   body {
@@ -359,6 +370,7 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     z-index: 1 !important;
   }

@@ -64,14 +64,24 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Skip Service Worker on iOS — iOS Safari has severe SW bugs that can block page loading
-      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      if ('serviceWorker' in navigator && !isIOS) {
+      // iOS Safari has severe Service Worker bugs (NavigationRoute can block page loading).
+      // On iOS: aggressively unregister any previously installed SW.
+      // On other platforms: register SW for PWA offline support.
+      (function() {
+        var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (!('serviceWorker' in navigator)) return;
+        if (isIOS) {
+          // Purge any stale SW that may have been installed before the iOS fix
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(r) { r.unregister(); });
+          });
+          return;
+        }
         window.addEventListener('load', function() {
           navigator.serviceWorker.register('/us-time/sw.js', { scope: '/us-time/' });
         });
-      }
+      })();
     </script>
   </body>
 </html>
