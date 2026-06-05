@@ -76,14 +76,12 @@ export function usePet({ setState, toast }: UsePetDeps) {
       const pet = prev.petState;
       if (!pet) return prev;
 
-      // Check hourly cooldown
       if (!canFeed(pet.lastFedAt)) {
         const remaining = formatCooldown(pet.lastFedAt);
         toast(`喂得太频繁啦～ ${remaining}后再来吧 🕐`, 'info');
         return prev;
       }
 
-      // Check aux bonus cap
       if (pet.happiness >= PET_MAX_AUX_BONUS) {
         toast('喂食加成已达上限，快和 TA 一起记录心情来提升吧 💕', 'info');
         return prev;
@@ -107,14 +105,12 @@ export function usePet({ setState, toast }: UsePetDeps) {
       const pet = prev.petState;
       if (!pet) return prev;
 
-      // Check daily petting bonus cap (15% max per day)
       const dailyPetCount = getDailyCount(INTERACT_COUNT_KEY);
       if (dailyPetCount >= DAILY_PET_BONUS_MAX) {
         toast('今天摸摸加成已达上限 (15%)，明天再继续宠爱TA吧～ ✨', 'info');
         return prev;
       }
 
-      // Check aux bonus cap (overall happiness from feed+pet cannot exceed 30)
       if (pet.happiness >= PET_MAX_AUX_BONUS) {
         toast('摸摸加成已达上限，快和 TA 一起记录心情来提升吧 💕', 'info');
         return prev;

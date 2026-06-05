@@ -57,8 +57,14 @@ export default function SettingsPage() {
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [pairingQR, setPairingQR] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [infoError, setInfoError] = useState('');
 
   const handleSaveInfo = async () => {
+    // Form validation
+    if (!myName.trim()) { setInfoError('请输入你的名字'); return; }
+    if (!partnerName.trim()) { setInfoError('请输入TA的名字'); return; }
+    if (!startDate) { setInfoError('请选择在一起的日子'); return; }
+    setInfoError('');
     setSaving(true);
     await setCoupleInfo({
       myName: myName.trim(),
@@ -194,6 +200,9 @@ export default function SettingsPage() {
                 label="在一起的日子"
               />
             </div>
+            {infoError && (
+              <p className="text-pink text-xs text-center">{infoError}</p>
+            )}
             <button
               onClick={() => setEditingInfo(false)}
               className="text-xs text-text-muted hover:text-text-primary transition-colors"

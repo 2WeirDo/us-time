@@ -47,3 +47,36 @@ export function formatRelativeTime(isoString: string): string {
     day: 'numeric',
   });
 }
+
+/**
+ * Runtime type guard — assert a value is a string.
+ */
+export function isString(v: unknown): v is string {
+  return typeof v === 'string';
+}
+
+/**
+ * Runtime type guard — assert a value is a string array.
+ */
+export function isStringArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.every((i) => typeof i === 'string');
+}
+
+/**
+ * Runtime type guard — assert a value is 'me' | 'partner'.
+ */
+export function isAuthor(v: unknown): v is 'me' | 'partner' {
+  return v === 'me' || v === 'partner';
+}
+
+/**
+ * Hash a string using SHA-256 (Web Crypto API).
+ * Returns hex-encoded hash string.
+ */
+export async function sha256(input: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}

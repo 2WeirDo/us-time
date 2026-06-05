@@ -1,4 +1,4 @@
-import QRCode from 'qrcode';
+import type QRCodeType from 'qrcode';
 
 interface PairingData {
   url: string;
@@ -43,10 +43,12 @@ export function savePairingCredentials(url: string, key: string): void {
 }
 
 /**
- * Generate a real QR code as a data URL using the qrcode library.
+ * Generate a real QR code as a data URL using the qrcode library (dynamic import).
+ * QRCode is ~30KB so we lazy-load it only when the user opens the Settings page.
  */
 export async function generatePairingQRCode(code: string): Promise<string> {
   try {
+    const QRCode = (await import('qrcode')).default as typeof QRCodeType;
     return await QRCode.toDataURL(code, {
       width: 200,
       margin: 2,

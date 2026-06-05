@@ -67,11 +67,16 @@ export default function PasscodeScreen({
     if (passcode.length !== 4 || !identity) return;
     setError('');
 
-    const valid = await verifyPasscode(passcode);
-    if (valid) {
-      onUnlock(identity, passcode);
-    } else {
-      setError('密码不正确');
+    try {
+      const valid = await verifyPasscode(passcode);
+      if (valid) {
+        onUnlock(identity, passcode);
+      } else {
+        setError('密码不正确');
+        setPasscode('');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '验证失败，请稍后再试');
       setPasscode('');
     }
   }, [passcode, identity, onUnlock]);

@@ -54,11 +54,6 @@ CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_author ON posts (author);
 CREATE INDEX IF NOT EXISTS idx_milestones_date ON milestones (date ASC);
 
--- ====== 禁用 RLS (这是两个人的私密 App，不需要行级安全) ======
-ALTER TABLE couple_settings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE posts DISABLE ROW LEVEL SECURITY;
-ALTER TABLE milestones DISABLE ROW LEVEL SECURITY;
-
 -- ====== 启用 Realtime (让帖子实时同步) ======
 ALTER PUBLICATION supabase_realtime ADD TABLE posts;
 
@@ -129,17 +124,93 @@ CREATE TABLE IF NOT EXISTS pet_state (
   last_interaction_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 新表禁用 RLS
-ALTER TABLE love_letters DISABLE ROW LEVEL SECURITY;
-ALTER TABLE bucket_list_items DISABLE ROW LEVEL SECURITY;
-ALTER TABLE footprints DISABLE ROW LEVEL SECURITY;
-ALTER TABLE pet_state DISABLE ROW LEVEL SECURITY;
+-- ====== 8. 评论表 ======
+CREATE TABLE IF NOT EXISTS comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  author TEXT NOT NULL CHECK (author IN ('me', 'partner')),
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments (post_id);
 
--- 新表启用 Realtime
+-- ====== 9. 今日心情表 ======
+CREATE TABLE IF NOT EXISTS today_moods (
+  date DATE NOT NULL,
+  author TEXT NOT NULL CHECK (author IN ('me', 'partner')),
+  mood TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (date, author)
+);
+
+-- ====== 新表启用 Realtime ======
 ALTER PUBLICATION supabase_realtime ADD TABLE love_letters;
 ALTER PUBLICATION supabase_realtime ADD TABLE bucket_list_items;
 ALTER PUBLICATION supabase_realtime ADD TABLE footprints;
-ALTER PUBLICATION supabase_realtime ADD TABLE pet_state;
+ALTER PUBLICATION supabase_realtime ADD TABLE today_moods;
+ALTER PUBLICATION supabase_realtime ADD TABLE comments;
+
+-- ====== RLS 策略 ======
+-- 由于这是两个人的私密 App，我们使用简单的密钥验证策略
+-- 客户端必须提供正确的 API key 才能访问数据
+
+-- 启用 RLS
+ALTER TABLE couple_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE milestones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE love_letters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bucket_list_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE footprints ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pet_state ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE today_moods ENABLE ROW LEVEL SECURITY;
+
+-- 所有表允许通过 anon key 进行所有操作
+-- （认证方式为应用层的密码验证，而非 SQL 层的 RLS）
+DROP POLICY IF EXISTS "Full access for anon" ON couple_settings;
+CREATE POLICY "Full access for anon" ON couple_settings
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Full access for anon" ON posts;
+CREATE POLICY "Full access for anon" ON posts
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Full access for anon" ON milestones;
+CREATE POLICY "Full access for anon" ON milestones
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Full access for anon" ON love_letters;
+CREATE POLICY "Full access for anon" ON love_letters
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Full access for anon" ON bucket_list_items;
+CREATE POLICY "Full access for anon" ON bucket_list_items
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Full access for anon" ON footprints;
+CREATE POLICY "Full access for anon" ON footprints
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Full access for anon" ON pet_state;
+CREATE POLICY "Full access for anon" ON pet_state
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Full access for anon" ON comments;
+CREATE POLICY "Full access for anon" ON comments
+  FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Full access for anon" ON today_moods;
+CREATE POLICY "Full access for anon" ON today_moods
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- 额外安全：限制存储桶路径只能在 photos/ 下
+DROP POLICY IF EXISTS "Public read access" ON storage.objects;
+CREATE POLICY "Public read access" ON storage.objects
+  FOR SELECT USING (bucket_id = 'photos');
+
+DROP POLICY IF EXISTS "Public upload access" ON storage.objects;
+CREATE POLICY "Public upload access" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'photos');
 
 -- ====== 可选：插入一条初始数据测试 ======
 -- INSERT INTO couple_settings (id, my_name, partner_name, start_date, passcode)

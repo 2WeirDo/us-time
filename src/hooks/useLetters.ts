@@ -1,45 +1,18 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import type { AppState, LoveLetter } from '../types';
 import {
   createLoveLetter as createLoveLetterDB,
   markLetterAsRead,
   deleteLoveLetter as deleteLoveLetterDB,
-  subscribeToLetters,
 } from '../lib/db';
 
 interface UseLettersDeps {
   setState: React.Dispatch<React.SetStateAction<AppState>>;
-  unlocked: boolean;
   toast: (msg: string, type?: 'success' | 'error') => void;
   loadData: () => Promise<void>;
 }
 
-export function useLetters({ setState, unlocked, toast, loadData }: UseLettersDeps) {
-  // ---- Real-time subscription ----
-  useEffect(() => {
-    if (!unlocked) return;
-    const cleanup = subscribeToLetters(
-      (newLetter) =>
-        setState((prev) => {
-          if (prev.loveLetters.some((l) => l.id === newLetter.id)) return prev;
-          return { ...prev, loveLetters: [newLetter, ...prev.loveLetters] };
-        }),
-      (updatedLetter) =>
-        setState((prev) => ({
-          ...prev,
-          loveLetters: prev.loveLetters.map((l) =>
-            l.id === updatedLetter.id ? updatedLetter : l
-          ),
-        })),
-      (letterId) =>
-        setState((prev) => ({
-          ...prev,
-          loveLetters: prev.loveLetters.filter((l) => l.id !== letterId),
-        }))
-    );
-    return cleanup;
-  }, [unlocked, setState]);
-
+export function useLetters({ setState, toast, loadData }: UseLettersDeps) {
   // ---- Actions ----
 
   const addLetter = useCallback(

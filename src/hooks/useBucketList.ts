@@ -1,46 +1,19 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import type { AppState, BucketListItem } from '../types';
 import {
   createBucketItem as createBucketItemDB,
   updateBucketItem as updateBucketItemDB,
   deleteBucketItem as deleteBucketItemDB,
-  subscribeToBucketItems,
 } from '../lib/db';
 
 interface UseBucketListDeps {
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   identity: 'me' | 'partner' | null;
-  unlocked: boolean;
   toast: (msg: string, type?: 'success' | 'error') => void;
   loadData: () => Promise<void>;
 }
 
-export function useBucketList({ setState, identity, unlocked, toast, loadData }: UseBucketListDeps) {
-  // ---- Real-time subscription ----
-  useEffect(() => {
-    if (!unlocked) return;
-    const cleanup = subscribeToBucketItems(
-      (newItem) =>
-        setState((prev) => {
-          if (prev.bucketListItems.some((b) => b.id === newItem.id)) return prev;
-          return { ...prev, bucketListItems: [newItem, ...prev.bucketListItems] };
-        }),
-      (updatedItem) =>
-        setState((prev) => ({
-          ...prev,
-          bucketListItems: prev.bucketListItems.map((b) =>
-            b.id === updatedItem.id ? updatedItem : b
-          ),
-        })),
-      (itemId) =>
-        setState((prev) => ({
-          ...prev,
-          bucketListItems: prev.bucketListItems.filter((b) => b.id !== itemId),
-        }))
-    );
-    return cleanup;
-  }, [unlocked, setState]);
-
+export function useBucketList({ setState, identity, toast, loadData }: UseBucketListDeps) {
   // ---- Actions ----
 
   const addBucketItem = useCallback(

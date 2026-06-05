@@ -1,45 +1,20 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import type { AppState, Post } from '../types';
 import {
   createPost as createPostDB,
   updatePostInDB,
   deletePostFromDB,
   updatePostReactions,
-  subscribeToPosts,
 } from '../lib/db';
 
 interface UsePostsDeps {
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   identity: 'me' | 'partner' | null;
-  unlocked: boolean;
   toast: (msg: string, type?: 'success' | 'error') => void;
   loadData: () => Promise<void>;
 }
 
-export function usePosts({ setState, identity, unlocked, toast, loadData }: UsePostsDeps) {
-  // ---- Real-time subscription ----
-  useEffect(() => {
-    if (!unlocked) return;
-    const cleanup = subscribeToPosts(
-      (newPost) =>
-        setState((prev) => {
-          if (prev.posts.some((p) => p.id === newPost.id)) return prev;
-          return { ...prev, posts: [newPost, ...prev.posts] };
-        }),
-      (updatedPost) =>
-        setState((prev) => ({
-          ...prev,
-          posts: prev.posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)),
-        })),
-      (postId) =>
-        setState((prev) => ({
-          ...prev,
-          posts: prev.posts.filter((p) => p.id !== postId),
-        }))
-    );
-    return cleanup;
-  }, [unlocked, setState]);
-
+export function usePosts({ setState, identity, toast, loadData }: UsePostsDeps) {
   // ---- Actions ----
 
   const addPost = useCallback(

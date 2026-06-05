@@ -21,6 +21,7 @@ import {
   fetchFootprints,
   fetchPetState,
   fetchTodayMoods,
+  subscribeToAll,
 } from '../lib/db';
 import { ensurePhotosBucket } from '../lib/storage';
 import { getDayKey } from '../lib/utils';
@@ -136,13 +137,98 @@ export function useAppState() {
     }
   }, [unlocked, loadData]);
 
+  // ---- Unified Realtime subscription (1 channel for all tables) ----
+  useEffect(() => {
+    if (!unlocked) return;
+    const unsub = subscribeToAll({
+      onPostInsert(newPost) {
+        setState((prev) => {
+          if (prev.posts.some((p) => p.id === newPost.id)) return prev;
+          return { ...prev, posts: [newPost, ...prev.posts] };
+        });
+      },
+      onPostUpdate(updatedPost) {
+        setState((prev) => ({
+          ...prev,
+          posts: prev.posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)),
+        }));
+      },
+      onPostDelete(postId) {
+        setState((prev) => ({ ...prev, posts: prev.posts.filter((p) => p.id !== postId) }));
+      },
+      onLetterInsert(newLetter) {
+        setState((prev) => {
+          if (prev.loveLetters.some((l) => l.id === newLetter.id)) return prev;
+          return { ...prev, loveLetters: [newLetter, ...prev.loveLetters] };
+        });
+      },
+      onLetterUpdate(updatedLetter) {
+        setState((prev) => ({
+          ...prev,
+          loveLetters: prev.loveLetters.map((l) => (l.id === updatedLetter.id ? updatedLetter : l)),
+        }));
+      },
+      onLetterDelete(letterId) {
+        setState((prev) => ({ ...prev, loveLetters: prev.loveLetters.filter((l) => l.id !== letterId) }));
+      },
+      onBucketInsert(newItem) {
+        setState((prev) => {
+          if (prev.bucketListItems.some((b) => b.id === newItem.id)) return prev;
+          return { ...prev, bucketListItems: [newItem, ...prev.bucketListItems] };
+        });
+      },
+      onBucketUpdate(updatedItem) {
+        setState((prev) => ({
+          ...prev,
+          bucketListItems: prev.bucketListItems.map((b) => (b.id === updatedItem.id ? updatedItem : b)),
+        }));
+      },
+      onBucketDelete(itemId) {
+        setState((prev) => ({ ...prev, bucketListItems: prev.bucketListItems.filter((b) => b.id !== itemId) }));
+      },
+      onFootprintInsert(newFp) {
+        setState((prev) => {
+          if (prev.footprints.some((f) => f.id === newFp.id)) return prev;
+          return { ...prev, footprints: [newFp, ...prev.footprints] };
+        });
+      },
+      onFootprintDelete(fpId) {
+        setState((prev) => ({ ...prev, footprints: prev.footprints.filter((f) => f.id !== fpId) }));
+      },
+      onMoodInsert(newMood) {
+        setState((prev) => {
+          const filtered = prev.todayMoods.filter((m) => !(m.date === newMood.date && m.author === newMood.author));
+          const updated = [...filtered, newMood];
+          localStorage.setItem(LOCAL_KEYS.moods, JSON.stringify(updated));
+          return { ...prev, todayMoods: updated };
+        });
+      },
+      onMoodUpdate(updatedMood) {
+        setState((prev) => {
+          const filtered = prev.todayMoods.filter((m) => !(m.date === updatedMood.date && m.author === updatedMood.author));
+          const updated = [...filtered, updatedMood];
+          localStorage.setItem(LOCAL_KEYS.moods, JSON.stringify(updated));
+          return { ...prev, todayMoods: updated };
+        });
+      },
+      onMoodDelete(deleted) {
+        setState((prev) => {
+          const updated = prev.todayMoods.filter((m) => !(m.date === deleted.date && m.author === deleted.author));
+          localStorage.setItem(LOCAL_KEYS.moods, JSON.stringify(updated));
+          return { ...prev, todayMoods: updated };
+        });
+      },
+    });
+    return unsub;
+  }, [unlocked, setState]);
+
   // ---- Domain hooks ----
-  const posts = usePosts({ setState, identity, unlocked, toast, loadData });
-  const letters = useLetters({ setState, unlocked, toast, loadData });
-  const bucketList = useBucketList({ setState, identity, unlocked, toast, loadData });
-  const footprints = useFootprints({ setState, unlocked, toast, loadData });
+  const posts = usePosts({ setState, identity, toast, loadData });
+  const letters = useLetters({ setState, toast, loadData });
+  const bucketList = useBucketList({ setState, identity, toast, loadData });
+  const footprints = useFootprints({ setState, toast, loadData });
   const pet = usePet({ setState, toast });
-  const moodTheme = useMoodTheme({ setState, unlocked });
+  const moodTheme = useMoodTheme({ setState });
   const commentModule = useComments({ unlocked, identity, toast });
   const dataMgmt = useDataManagement({ state, setState, toast, lock: auth.lock });
 

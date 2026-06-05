@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase';
-import type { Post, Milestone, CoupleInfo, PostComment } from '../types';
+import { isString, isStringArray, isAuthor, sha256 } from './utils';
+import type { Post, Milestone, CoupleInfo, PostComment, LoveLetter, BucketListItem, Footprint, PetState, TodayMood } from '../types';
 
 // ====== Posts ======
 
@@ -77,42 +78,88 @@ export async function deletePostFromDB(postId: string): Promise<boolean> {
 }
 
 /**
- * Subscribe to real-time post changes.
+ * Single unified Realtime channel — all tables, one WebSocket connection.
  * Returns an unsubscribe function.
  */
-export function subscribeToPosts(
-  onInsert: (post: Post) => void,
-  onUpdate: (post: Post) => void,
-  onDelete: (postId: string) => void
-): () => void {
+export function subscribeToAll(handlers: {
+  onPostInsert?: (post: Post) => void;
+  onPostUpdate?: (post: Post) => void;
+  onPostDelete?: (postId: string) => void;
+  onLetterInsert?: (letter: LoveLetter) => void;
+  onLetterUpdate?: (letter: LoveLetter) => void;
+  onLetterDelete?: (id: string) => void;
+  onBucketInsert?: (item: BucketListItem) => void;
+  onBucketUpdate?: (item: BucketListItem) => void;
+  onBucketDelete?: (id: string) => void;
+  onFootprintInsert?: (fp: Footprint) => void;
+  onFootprintDelete?: (id: string) => void;
+  onMoodInsert?: (mood: TodayMood) => void;
+  onMoodUpdate?: (mood: TodayMood) => void;
+  onMoodDelete?: (mood: { date: string; author: string }) => void;
+}): () => void {
   const sb = getSupabase();
   if (!sb) return () => {};
 
-  const channel = sb
-    .channel('posts-changes')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'posts' },
-      (payload) => {
-        onInsert(mapPost(payload.new as any));
-      }
-    )
-    .on(
-      'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'posts' },
-      (payload) => {
-        onUpdate(mapPost(payload.new as any));
-      }
-    )
-    .on(
-      'postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'posts' },
-      (payload) => {
-        onDelete((payload.old as any).id);
-      }
-    )
-    .subscribe();
+  const channel = sb.channel('us-time-all-changes');
 
+  // Posts
+  channel
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, (p) =>
+      handlers.onPostInsert?.(mapPost(p.new as any))
+    )
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (p) =>
+      handlers.onPostUpdate?.(mapPost(p.new as any))
+    )
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'posts' }, (p) =>
+      handlers.onPostDelete?.((p.old as any).id)
+    );
+
+  // Letters
+  channel
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'love_letters' }, (p) =>
+      handlers.onLetterInsert?.(mapLetter(p.new as any))
+    )
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'love_letters' }, (p) =>
+      handlers.onLetterUpdate?.(mapLetter(p.new as any))
+    )
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'love_letters' }, (p) =>
+      handlers.onLetterDelete?.((p.old as any).id)
+    );
+
+  // Bucket list
+  channel
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bucket_list_items' }, (p) =>
+      handlers.onBucketInsert?.(mapBucketItem(p.new as any))
+    )
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bucket_list_items' }, (p) =>
+      handlers.onBucketUpdate?.(mapBucketItem(p.new as any))
+    )
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bucket_list_items' }, (p) =>
+      handlers.onBucketDelete?.((p.old as any).id)
+    );
+
+  // Footprints
+  channel
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'footprints' }, (p) =>
+      handlers.onFootprintInsert?.(mapFootprint(p.new as any))
+    )
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'footprints' }, (p) =>
+      handlers.onFootprintDelete?.((p.old as any).id)
+    );
+
+  // Today moods
+  channel
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'today_moods' }, (p) =>
+      handlers.onMoodInsert?.(mapTodayMood(p.new as any))
+    )
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'today_moods' }, (p) =>
+      handlers.onMoodUpdate?.(mapTodayMood(p.new as any))
+    )
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'today_moods' }, (p) =>
+      handlers.onMoodDelete?.({ date: (p.old as any).date, author: (p.old as any).author })
+    );
+
+  channel.subscribe();
   return () => {
     channel.unsubscribe();
   };
@@ -155,6 +202,9 @@ export async function saveCoupleSettings(
   const sb = getSupabase();
   if (!sb) return false;
 
+  // Hash passcode with SHA-256 before storing
+  const hashed = await sha256(passcode);
+
   const { error } = await sb.from('couple_settings').upsert({
     id: 1,
     my_name: coupleInfo.myName,
@@ -163,15 +213,63 @@ export async function saveCoupleSettings(
     couple_emoji: coupleInfo.coupleEmoji || '👫',
     avatar_me: coupleInfo.avatarMe || null,
     avatar_partner: coupleInfo.avatarPartner || null,
-    passcode,
+    passcode: hashed, // stored as SHA-256 hash
   });
 
   return !error;
 }
 
+/**
+ * Verify a passcode against the stored SHA-256 hash.
+ * Includes rate-limiting: max 5 failed attempts before 30s cooldown.
+ */
+const FAILED_LOGIN_KEY = 'us-time-failed-logins';
+const MAX_FAILED_ATTEMPTS = 5;
+const COOLDOWN_MS = 30_000;
+
+function checkLoginRateLimit(): boolean {
+  try {
+    const stored = localStorage.getItem(FAILED_LOGIN_KEY);
+    if (!stored) return true;
+    const record = JSON.parse(stored);
+    if (record.count >= MAX_FAILED_ATTEMPTS) {
+      const elapsed = Date.now() - record.firstFailedAt;
+      if (elapsed < COOLDOWN_MS) return false;
+      // Cooldown expired — reset
+      localStorage.removeItem(FAILED_LOGIN_KEY);
+    }
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+function recordFailedLogin(): void {
+  try {
+    const stored = localStorage.getItem(FAILED_LOGIN_KEY);
+    const record = stored ? JSON.parse(stored) : null;
+    if (record && record.count < MAX_FAILED_ATTEMPTS) {
+      record.count++;
+      localStorage.setItem(FAILED_LOGIN_KEY, JSON.stringify(record));
+    } else {
+      localStorage.setItem(
+        FAILED_LOGIN_KEY,
+        JSON.stringify({ count: 1, firstFailedAt: Date.now() })
+      );
+    }
+  } catch {
+    // localStorage full — ignore
+  }
+}
+
 export async function verifyPasscode(passcode: string): Promise<boolean> {
   const sb = getSupabase();
   if (!sb) return false;
+
+  // Check rate limit
+  if (!checkLoginRateLimit()) {
+    throw new Error('尝试次数过多，请30秒后再试');
+  }
 
   const { data, error } = await sb
     .from('couple_settings')
@@ -180,7 +278,19 @@ export async function verifyPasscode(passcode: string): Promise<boolean> {
     .single();
 
   if (error || !data) return false;
-  return data.passcode === passcode;
+
+  // Compare against stored SHA-256 hash
+  const hashed = await sha256(passcode);
+  const valid = data.passcode === hashed;
+
+  if (!valid) {
+    recordFailedLogin();
+  } else {
+    // Clear failed attempts on success
+    localStorage.removeItem(FAILED_LOGIN_KEY);
+  }
+
+  return valid;
 }
 
 // ====== Milestones ======
@@ -251,16 +361,19 @@ export async function deleteMilestoneFromDB(
 
 // ====== Helpers ======
 
-function mapPost(db: any): Post {
+function mapPost(db: unknown): Post {
+  const row = db as Record<string, unknown>;
   return {
-    id: db.id,
-    author: db.author,
-    content: db.content || '',
-    photos: db.photos || [],
-    audio: db.audio || undefined,
-    mood: db.mood || undefined,
-    createdAt: db.created_at,
-    reactions: db.reactions || {},
+    id: isString(row.id) ? row.id : crypto.randomUUID(),
+    author: isAuthor(row.author) ? row.author : 'me',
+    content: isString(row.content) ? row.content : '',
+    photos: isStringArray(row.photos) ? row.photos : [],
+    audio: isString(row.audio) ? row.audio : undefined,
+    mood: isString(row.mood) ? row.mood : undefined,
+    createdAt: isString(row.created_at) ? row.created_at : new Date().toISOString(),
+    reactions: typeof row.reactions === 'object' && row.reactions !== null
+      ? (row.reactions as Record<string, string[]>)
+      : {},
   };
 }
 
@@ -282,7 +395,6 @@ export async function updatePostReactions(
 }
 
 // ====== Love Letters ======
-import type { LoveLetter, BucketListItem, Footprint, PetState } from '../types';
 
 export async function fetchLoveLetters(): Promise<LoveLetter[]> {
   const sb = getSupabase();
@@ -325,22 +437,6 @@ export async function deleteLoveLetter(letterId: string): Promise<boolean> {
   if (!sb) return false;
   const { error } = await sb.from('love_letters').delete().eq('id', letterId);
   return !error;
-}
-
-export function subscribeToLetters(
-  onInsert: (letter: LoveLetter) => void,
-  onUpdate: (letter: LoveLetter) => void,
-  onDelete: (id: string) => void
-): () => void {
-  const sb = getSupabase();
-  if (!sb) return () => {};
-  const channel = sb
-    .channel('letters-changes')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'love_letters' }, (p) => onInsert(mapLetter(p.new as any)))
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'love_letters' }, (p) => onUpdate(mapLetter(p.new as any)))
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'love_letters' }, (p) => onDelete((p.old as any).id))
-    .subscribe();
-  return () => { channel.unsubscribe(); };
 }
 
 // ====== Bucket List Items ======
@@ -403,22 +499,6 @@ export async function deleteBucketItem(itemId: string): Promise<boolean> {
   return !error;
 }
 
-export function subscribeToBucketItems(
-  onInsert: (item: BucketListItem) => void,
-  onUpdate: (item: BucketListItem) => void,
-  onDelete: (id: string) => void
-): () => void {
-  const sb = getSupabase();
-  if (!sb) return () => {};
-  const channel = sb
-    .channel('bucket-changes')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bucket_list_items' }, (p) => onInsert(mapBucketItem(p.new as any)))
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bucket_list_items' }, (p) => onUpdate(mapBucketItem(p.new as any)))
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bucket_list_items' }, (p) => onDelete((p.old as any).id))
-    .subscribe();
-  return () => { channel.unsubscribe(); };
-}
-
 // ====== Footprints ======
 
 export async function fetchFootprints(): Promise<Footprint[]> {
@@ -459,20 +539,6 @@ export async function deleteFootprint(fpId: string): Promise<boolean> {
   return !error;
 }
 
-export function subscribeToFootprints(
-  onInsert: (fp: Footprint) => void,
-  onDelete: (id: string) => void
-): () => void {
-  const sb = getSupabase();
-  if (!sb) return () => {};
-  const channel = sb
-    .channel('footprints-changes')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'footprints' }, (p) => onInsert(mapFootprint(p.new as any)))
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'footprints' }, (p) => onDelete((p.old as any).id))
-    .subscribe();
-  return () => { channel.unsubscribe(); };
-}
-
 // ====== Pet State ======
 
 export async function fetchPetState(): Promise<PetState | null> {
@@ -503,54 +569,59 @@ export async function savePetState(pet: PetState): Promise<boolean> {
 
 // ====== Helpers (extended) ======
 
-function mapLetter(db: any): LoveLetter {
+function mapLetter(db: unknown): LoveLetter {
+  const row = db as Record<string, unknown>;
   return {
-    id: db.id,
-    author: db.author,
-    imageUrl: db.image_url || undefined,
-    title: db.title || undefined,
-    message: db.message || undefined,
-    read: db.read || false,
-    createdAt: db.created_at,
+    id: isString(row.id) ? row.id : crypto.randomUUID(),
+    author: isAuthor(row.author) ? row.author : 'me',
+    imageUrl: isString(row.image_url) ? row.image_url : undefined,
+    title: isString(row.title) ? row.title : undefined,
+    message: isString(row.message) ? row.message : undefined,
+    read: row.read === true,
+    createdAt: isString(row.created_at) ? row.created_at : new Date().toISOString(),
   };
 }
 
-function mapBucketItem(db: any): BucketListItem {
+function mapBucketItem(db: unknown): BucketListItem {
+  const row = db as Record<string, unknown>;
   return {
-    id: db.id,
-    title: db.title,
-    category: db.category || 'other',
-    notes: db.notes || '',
-    emoji: db.emoji || '✨',
-    completed: db.completed || false,
-    completedBy: db.completed_by || undefined,
-    completedAt: db.completed_at || undefined,
-    createdBy: db.created_by,
-    createdAt: db.created_at,
+    id: isString(row.id) ? row.id : crypto.randomUUID(),
+    title: isString(row.title) ? row.title : '',
+    category: isString(row.category) ? row.category : 'other',
+    notes: isString(row.notes) ? row.notes : '',
+    emoji: isString(row.emoji) ? row.emoji : '✨',
+    completed: row.completed === true,
+    completedBy: isAuthor(row.completed_by) ? row.completed_by : undefined,
+    completedAt: isString(row.completed_at) ? row.completed_at : undefined,
+    createdBy: isAuthor(row.created_by) ? row.created_by : 'me',
+    createdAt: isString(row.created_at) ? row.created_at : new Date().toISOString(),
   };
 }
 
-function mapFootprint(db: any): Footprint {
+function mapFootprint(db: unknown): Footprint {
+  const row = db as Record<string, unknown>;
   return {
-    id: db.id,
-    name: db.name,
-    lat: db.lat,
-    lng: db.lng,
-    date: db.date || undefined,
-    photo: db.photo || undefined,
-    note: db.note || '',
-    createdBy: db.created_by,
-    createdAt: db.created_at,
+    id: isString(row.id) ? row.id : crypto.randomUUID(),
+    name: isString(row.name) ? row.name : '',
+    lat: typeof row.lat === 'number' ? row.lat : 0,
+    lng: typeof row.lng === 'number' ? row.lng : 0,
+    date: isString(row.date) ? row.date : undefined,
+    photo: isString(row.photo) ? row.photo : undefined,
+    note: isString(row.note) ? row.note : '',
+    createdBy: isAuthor(row.created_by) ? row.created_by : 'me',
+    createdAt: isString(row.created_at) ? row.created_at : new Date().toISOString(),
   };
 }
 
-function mapPetState(db: any): PetState {
+function mapPetState(db: unknown): PetState {
+  const row = db as Record<string, unknown>;
   return {
-    petType: db.pet_type || 'cat',
-    name: db.name || '小可爱',
-    happiness: db.happiness ?? 50,
-    lastFedAt: db.last_fed_at,
-    lastInteractionAt: db.last_interaction_at,
+    petType: row.pet_type === 'cat' || row.pet_type === 'bunny' || row.pet_type === 'bear' || row.pet_type === 'dog'
+      ? row.pet_type : 'cat',
+    name: isString(row.name) ? row.name : '小可爱',
+    happiness: typeof row.happiness === 'number' ? row.happiness : 50,
+    lastFedAt: isString(row.last_fed_at) ? row.last_fed_at : new Date().toISOString(),
+    lastInteractionAt: isString(row.last_interaction_at) ? row.last_interaction_at : new Date().toISOString(),
   };
 }
 
@@ -616,39 +687,26 @@ export function subscribeToComments(
 ): () => void {
   const sb = getSupabase();
   if (!sb) return () => {};
-
   const channel = sb
     .channel('comments-changes')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'comments' },
-      (payload) => onInsert(mapComment(payload.new as any))
-    )
-    .on(
-      'postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'comments' },
-      (payload) => onDelete((payload.old as any).id)
-    )
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (p) => onInsert(mapComment(p.new as any)))
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'comments' }, (p) => onDelete((p.old as any).id))
     .subscribe();
-
-  return () => {
-    channel.unsubscribe();
-  };
+  return () => { channel.unsubscribe(); };
 }
 
-function mapComment(db: any): PostComment {
+function mapComment(db: unknown): PostComment {
+  const row = db as Record<string, unknown>;
   return {
-    id: db.id,
-    postId: db.post_id,
-    author: db.author,
-    content: db.content,
-    createdAt: db.created_at,
+    id: isString(row.id) ? row.id : crypto.randomUUID(),
+    postId: isString(row.post_id) ? row.post_id : '',
+    author: isAuthor(row.author) ? row.author : 'me',
+    content: isString(row.content) ? row.content : '',
+    createdAt: isString(row.created_at) ? row.created_at : new Date().toISOString(),
   };
 }
 
 // ====== Today Moods ======
-
-import type { TodayMood } from '../types';
 
 export async function fetchTodayMoods(): Promise<TodayMood[]> {
   const sb = getSupabase();
@@ -704,81 +762,40 @@ export async function deleteTodayMood(
   return !error;
 }
 
-export function subscribeToMoods(
-  onInsert: (mood: TodayMood) => void,
-  onUpdate: (mood: TodayMood) => void,
-  onDelete: (mood: { date: string; author: string }) => void
-): () => void {
-  const sb = getSupabase();
-  if (!sb) return () => {};
-
-  const channel = sb
-    .channel('moods-changes')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'today_moods' },
-      (payload) => onInsert(mapTodayMood(payload.new as any))
-    )
-    .on(
-      'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'today_moods' },
-      (payload) => onUpdate(mapTodayMood(payload.new as any))
-    )
-    .on(
-      'postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'today_moods' },
-      (payload) =>
-        onDelete({
-          date: (payload.old as any).date,
-          author: (payload.old as any).author,
-        })
-    )
-    .subscribe();
-
-  return () => {
-    channel.unsubscribe();
-  };
-}
-
-function mapTodayMood(db: any): TodayMood {
+function mapTodayMood(db: unknown): TodayMood {
+  const row = db as Record<string, unknown>;
   return {
-    date: db.date,
-    author: db.author,
-    mood: db.mood,
+    date: isString(row.date) ? row.date : new Date().toISOString().split('T')[0],
+    author: isAuthor(row.author) ? row.author : 'me',
+    mood: isString(row.mood) ? row.mood : '😊',
   };
 }
 
-/** Delete ALL data from every table — used by full app reset.
- *  Returns the number of tables that failed (0 = all success). */
+/**
+ * Delete ALL data from every table — used by full app reset.
+ * Separates UUID-keyed tables from integer-keyed tables. */
 export async function clearAllSupabaseData(): Promise<number> {
   const sb = getSupabase();
   if (!sb) return -1;
 
-  const tables = [
-    'posts',
-    'milestones',
-    'love_letters',
-    'bucket_list_items',
-    'footprints',
-    'pet_state',
-    'couple_settings',
-    'comments',
-    'today_moods',
-  ];
+  const uuidTables = ['posts', 'milestones', 'love_letters', 'bucket_list_items', 'footprints', 'comments', 'today_moods'];
+  const intTables = ['pet_state', 'couple_settings'];
 
-  const results = await Promise.all(
-    tables.map(async (t) => {
-      try {
-        const { error } = await sb
-          .from(t)
-          .delete()
-          .neq('id', '__sentinel__'); // delete all rows without a filter error
-        return error ? 1 : 0;
-      } catch {
-        return 1;
-      }
-    })
-  );
+  let failures = 0;
 
-  return results.reduce((sum: number, v: number) => sum + v, 0);
+  for (const table of uuidTables) {
+    try {
+      const { error } = await sb.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) failures++;
+    } catch { failures++; }
+  }
+
+  for (const table of intTables) {
+    try {
+      const { error } = await sb.from(table).delete().neq('id', -1);
+      if (error) failures++;
+    } catch { failures++; }
+  }
+
+  return failures;
 }

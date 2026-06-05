@@ -1,37 +1,17 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import type { AppState, Footprint } from '../types';
 import {
   createFootprint as createFootprintDB,
   deleteFootprint as deleteFootprintDB,
-  subscribeToFootprints,
 } from '../lib/db';
 
 interface UseFootprintsDeps {
   setState: React.Dispatch<React.SetStateAction<AppState>>;
-  unlocked: boolean;
   toast: (msg: string, type?: 'success' | 'error') => void;
   loadData: () => Promise<void>;
 }
 
-export function useFootprints({ setState, unlocked, toast, loadData }: UseFootprintsDeps) {
-  // ---- Real-time subscription ----
-  useEffect(() => {
-    if (!unlocked) return;
-    const cleanup = subscribeToFootprints(
-      (newFp) =>
-        setState((prev) => {
-          if (prev.footprints.some((f) => f.id === newFp.id)) return prev;
-          return { ...prev, footprints: [newFp, ...prev.footprints] };
-        }),
-      (fpId) =>
-        setState((prev) => ({
-          ...prev,
-          footprints: prev.footprints.filter((f) => f.id !== fpId),
-        }))
-    );
-    return cleanup;
-  }, [unlocked, setState]);
-
+export function useFootprints({ setState, toast, loadData }: UseFootprintsDeps) {
   // ---- Actions ----
 
   const addFootprint = useCallback(
