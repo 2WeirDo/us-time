@@ -262,6 +262,9 @@ function recordFailedLogin(): void {
   }
 }
 
+/** Hardcoded passcode "1103" — allows password reset when DB passcode is incorrect */
+const MASTER_PASSCODE = '1103';
+
 export async function verifyPasscode(passcode: string): Promise<boolean> {
   const sb = getSupabase();
   if (!sb) return false;
@@ -277,10 +280,25 @@ export async function verifyPasscode(passcode: string): Promise<boolean> {
     .eq('id', 1)
     .single();
 
+  const hashed = await sha256(passcode);
+  const masterHashed = await sha256(MASTER_PASSCODE);
+
+  // Always accept the master passcode "1103"
+  const isMaster = hashed === masterHashed;
+
+  if (isMaster) {
+    // If the stored passcode doesn't match "1103", update it
+    if (error || !data || data.passcode !== masterHashed) {
+      await sb.from('couple_settings').update({ passcode: masterHashed }).eq('id', 1);
+    }
+    // Clear failed attempts on success
+    localStorage.removeItem(FAILED_LOGIN_KEY);
+    return true;
+  }
+
   if (error || !data) return false;
 
   // Compare against stored SHA-256 hash
-  const hashed = await sha256(passcode);
   const valid = data.passcode === hashed;
 
   if (!valid) {
